@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import get_config
 from bot.database.models import User, UserRole, UserStatus
-from bot.keyboards.menus import contact_request_kb, menu_for_role, remove_kb
+from bot.keyboards.menus import contact_request_kb, guest_menu_kb, menu_for_role, remove_kb
 from bot.services.user_service import (
     create_pending_user, ensure_super_admin, get_user_by_telegram_id,
 )
@@ -14,6 +14,13 @@ from bot.utils.states import Registration
 
 router = Router(name="start")
 config = get_config()
+
+WELCOME_TEXT = (
+    "👋 Assalomu alaykum! <b>Miradel Academy</b> botiga xush kelibsiz.\n\n"
+    "Bu yerda o'quv markazimiz yangiliklari, kurslar jadvali va konkurslar bilan "
+    "tanishishingiz mumkin.\n\n"
+    "O'quvchi sifatida tizimga qo'shilish uchun \"📝 Ro'yxatdan o'tish\" tugmasini bosing."
+)
 
 
 @router.message(CommandStart())
@@ -38,11 +45,13 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext, 
         elif user.status == UserStatus.BLOCKED:
             await message.answer("🚫 Hisobingiz bloklangan.")
         elif user.status == UserStatus.REJECTED:
-            await message.answer("Qaytadan ro'yxatdan o'tishingiz mumkin. Ismingizni kiriting:")
-            await state.set_state(Registration.waiting_full_name)
+            await message.answer(WELCOME_TEXT, reply_markup=guest_menu_kb())
         return
 
-    # Referal orqali kirgan bo'lsa - start payload'dan referrer_id ni o'qib olamiz (8.2-bo'lim)
+    # Referal orqali kirgan bo'lsa - start payload'dan referrer_id ni o'qib olamiz (8.2-bo'lim).
+    # FSM holatini o'zgartirmasdan (set_state chaqirmasdan) shunchaki state ma'lumotiga
+    # yozib qo'yamiz - shuning uchun bu mehmon rejimida bloklanmaydi, keyinroq
+    # "Ro'yxatdan o'tish" bosilganda ishlatiladi.
     referrer_telegram_id = None
     if command.args and command.args.startswith("ref_"):
         try:
@@ -51,9 +60,22 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext, 
             referrer_telegram_id = None
     await state.update_data(referrer_telegram_id=referrer_telegram_id)
 
+    await message.answer(WELCOME_TEXT, reply_markup=guest_menu_kb())
+
+
+@router.message(F.text == "📝 Ro'yxatdan o'tish")
+async def start_registration(message: Message, session: AsyncSession, state: FSMContext, **kwargs):
+    existing = await get_user_by_telegram_id(session, message.from_user.id)
+    if existing is not None and existing.status == UserStatus.APPROVED:
+        await message.answer("Siz allaqachon ro'yxatdan o'tgansiz.", reply_markup=menu_for_role(existing.role))
+        return
+    if existing is not None and existing.status == UserStatus.PENDING:
+        await message.answer("⏳ Arizangiz allaqachon yuborilgan, admin javobini kuting.")
+        return
+
     await message.answer(
-        "👋 Assalomu alaykum! O'quv markaz botiga xush kelibsiz.\n\n"
-        "Ro'yxatdan o'tish uchun to'liq ism-familiyangizni kiriting:"
+        "Ro'yxatdan o'tish uchun to'liq ism-familiyangizni kiriting:",
+        reply_markup=remove_kb(),
     )
     await state.set_state(Registration.waiting_full_name)
 
