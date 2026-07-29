@@ -8,7 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import get_config
 from bot.database.engine import async_session, init_db
-from bot.handlers import admin, common, start, student, teacher
+from bot.handlers import admin, common, public, start, student, teacher
 from bot.middlewares.access_control import AccessControlMiddleware
 from bot.middlewares.db_session import DbSessionMiddleware
 from bot.middlewares.subscription_check import SubscriptionCheckMiddleware
@@ -37,6 +37,7 @@ async def main() -> None:
     dp.callback_query.outer_middleware(SubscriptionCheckMiddleware())
 
     dp.include_router(start.router)
+    dp.include_router(public.router)
     dp.include_router(common.router)
     dp.include_router(admin.router)
     dp.include_router(teacher.router)
