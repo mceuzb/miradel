@@ -23,3 +23,18 @@ def modules_kb(modules) -> InlineKeyboardMarkup:
             callback_data=f"toggle_module:{m.module_key}",
         )])
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def channels_kb(channels) -> InlineKeyboardMarkup:
+    rows = []
+    for ch in channels:
+        status_icon = "🟢" if ch.is_active else "🔴"
+        rows.append([
+            InlineKeyboardButton(
+                text=f"{status_icon} @{ch.channel_username}",
+                callback_data=f"toggle_channel:{ch.id}",
+            ),
+            InlineKeyboardButton(text="🗑", callback_data=f"delete_channel:{ch.id}"),
+        ])
+    rows.append([InlineKeyboardButton(text="➕ Yangi kanal qo'shish", callback_data="add_channel")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
