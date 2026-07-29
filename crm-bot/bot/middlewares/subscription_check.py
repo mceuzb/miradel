@@ -1,16 +1,17 @@
 from typing import Any, Awaitable, Callable
 
 from aiogram import BaseMiddleware
-from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, TelegramObject
 
-from bot.database.models import User
 from bot.services.module_service import is_module_enabled
 from bot.services.subscription_service import check_all_required_channels
 
 
 class SubscriptionCheckMiddleware(BaseMiddleware):
-    """7-bo'lim: majburiy obuna moduli yoqilgan bo'lsa, har bir xabarda tekshiradi."""
+    """7-bo'lim: majburiy obuna moduli yoqilgan bo'lsa, HAR BIR foydalanuvchi -
+    hatto hali ro'yxatdan o'tmagan mehmon ham - /start bosgan zahoti tekshiriladi.
+    Ro'yxatdan o'tishdan oldin ishlaydi, chunki bu middleware AccessControl'dan
+    keyin, lekin har qanday handler'dan oldin ishga tushadi."""
 
     async def __call__(
         self,
@@ -21,22 +22,18 @@ class SubscriptionCheckMiddleware(BaseMiddleware):
         if not isinstance(event, (Message, CallbackQuery)):
             return await handler(event, data)
 
-        db_user: User | None = data.get("db_user")
-        if db_user is None:
-            # Ro'yxatdan o'tmagan yoki tasdiqlanmagan foydalanuvchi - access_control allaqachon boshqargan
+        if event.from_user is None:
             return await handler(event, data)
 
-        state: FSMContext | None = data.get("state")
-        if state is not None and await state.get_state() is not None:
-            return await handler(event, data)
-
-        # "✅ A'zo bo'ldim" tugmasi bosilganda ham shu yerdan qayta tekshiriladi
+        # "✅ A'zo bo'ldim" tugmasi bosilganda ham shu yerdan qayta tekshiriladi -
+        # agar hali ham a'zo bo'lmasa, pastda yana taklif ko'rsatiladi
         session = data["session"]
         if not await is_module_enabled(session, "mandatory_subscription"):
             return await handler(event, data)
 
         bot = data["bot"]
-        missing = await check_all_required_channels(session, bot, db_user.telegram_id)
+        telegram_id = event.from_user.id
+        missing = await check_all_required_channels(session, bot, telegram_id)
         if not missing:
             return await handler(event, data)
 
