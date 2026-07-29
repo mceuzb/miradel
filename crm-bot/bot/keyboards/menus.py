@@ -13,6 +13,17 @@ def remove_kb() -> ReplyKeyboardRemove:
     return ReplyKeyboardRemove()
 
 
+def guest_menu_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="📅 Kurslar jadvali")],
+            [KeyboardButton(text="🎁 Konkurslar")],
+            [KeyboardButton(text="📝 Ro'yxatdan o'tish")],
+        ],
+        resize_keyboard=True,
+    )
+
+
 def admin_menu_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -52,3 +63,8 @@ def menu_for_role(role) -> ReplyKeyboardMarkup:
         UserRole.STUDENT: student_menu_kb,
     }
     return mapping[role]()
+
+
+# Ro'yxatdan o'tmagan (guest) foydalanuvchilar ham kira oladigan tugmalar matni.
+# AccessControlMiddleware shu ro'yxatga qarab tekshiradi.
+PUBLIC_TEXTS = {"📰 Yangiliklar", "📅 Kurslar jadvali", "🎁 Konkurslar", "📝 Ro'yxatdan o'tish"}
