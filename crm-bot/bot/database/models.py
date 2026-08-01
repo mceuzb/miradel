@@ -43,6 +43,13 @@ class ContestStatus(str, enum.Enum):
     FINISHED = "finished"
 
 
+class GroupEnrollmentStatus(str, enum.Enum):
+    OPEN = "open"            # 🟢 Qabul ochiq
+    FILLING = "filling"      # 🟡 To'lmoqda
+    FEW_SPOTS = "few_spots"  # 🔴 Joylar kam qolmoqda
+    CLOSED = "closed"        # Yopiq - ommaviy ro'yxatda ko'rinmaydi
+
+
 class ReferralStatus(str, enum.Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
@@ -73,6 +80,10 @@ class Group(Base):
     subject: Mapped[str | None] = mapped_column(String(255), nullable=True)
     teacher_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    enrollment_status: Mapped[GroupEnrollmentStatus] = mapped_column(
+        Enum(GroupEnrollmentStatus, name="group_enrollment_status"),
+        default=GroupEnrollmentStatus.OPEN,
+    )
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
