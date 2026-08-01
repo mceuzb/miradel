@@ -6,7 +6,8 @@ from aiogram.types import CallbackQuery, Message, TelegramObject
 
 from bot.database.models import UserStatus
 from bot.keyboards.menus import PUBLIC_TEXTS
-from bot.services.user_service import get_user_by_telegram_id
+from bot.services.referral_service import capture_referral
+from bot.services.user_service import get_user_by_telegram_id, sync_username
 
 PENDING_TEXT = (
     "⏳ Arizangiz ko'rib chiqilmoqda.\n"
@@ -20,7 +21,12 @@ class AccessControlMiddleware(BaseMiddleware):
     """2.4-bo'lim: admin tasdiqlamaguncha shaxsiy panel/funksiyalarga kirish yo'q.
     Lekin PUBLIC_TEXTS (yangiliklar, kurslar jadvali, konkurslar, ro'yxatdan o'tish
     tugmasi) va /start har doim ochiq - ro'yxatdan o'tmagan mehmon foydalanuvchilar
-    ham shu ommaviy bo'limlarni ko'ra oladi."""
+    ham shu ommaviy bo'limlarni ko'ra oladi.
+
+    Bu yerda, blok qilishdan OLDIN, referal havola orqali kirilgan bo'lsa
+    (/start ref_<id>) - taklif yozib qo'yiladi. Bu SubscriptionCheckMiddleware
+    keyinroq foydalanuvchini kanalga a'zo bo'lmagani uchun to'xtatib qo'ysa ham,
+    taklif ma'lumoti yo'qolib qolmasligi uchun shart."""
 
     async def __call__(
         self,
@@ -33,7 +39,22 @@ class AccessControlMiddleware(BaseMiddleware):
 
         session = data["session"]
         telegram_id = event.from_user.id if event.from_user else None
+
+        if (
+            isinstance(event, Message) and event.text and event.text.startswith("/start")
+            and telegram_id
+        ):
+            parts = event.text.split(maxsplit=1)
+            if len(parts) == 2 and parts[1].startswith("ref_"):
+                try:
+                    referrer_telegram_id = int(parts[1].removeprefix("ref_"))
+                    await capture_referral(session, telegram_id, referrer_telegram_id)
+                except ValueError:
+                    pass
+
         db_user = await get_user_by_telegram_id(session, telegram_id) if telegram_id else None
+        if db_user is not None and event.from_user:
+            await sync_username(session, db_user, event.from_user.username)
         data["db_user"] = db_user
 
         # /start va ommaviy (guest) tugmalar - hech qanday tasdiqlashsiz ochiq
