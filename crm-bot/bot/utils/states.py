@@ -23,3 +23,10 @@ class TaskSubmission(StatesGroup):
 
 class ChannelCreation(StatesGroup):
     waiting_username = State()
+
+
+class ContestCreation(StatesGroup):
+    waiting_title = State()
+    waiting_end_date = State()
+    waiting_winners_count = State()
+    waiting_prize = State()
