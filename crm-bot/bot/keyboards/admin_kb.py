@@ -1,7 +1,36 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.database.models import ContestStatus
+from bot.database.models import ContestStatus, GroupEnrollmentStatus
 from bot.services.module_service import MODULE_KEYS
+
+ENROLLMENT_STATUS_LABELS = {
+    GroupEnrollmentStatus.OPEN: "🟢 Qabul ochiq",
+    GroupEnrollmentStatus.FILLING: "🟡 To'lmoqda",
+    GroupEnrollmentStatus.FEW_SPOTS: "🔴 Joylar kam qolmoqda",
+    GroupEnrollmentStatus.CLOSED: "⚫️ Yopiq (ommaga ko'rinmaydi)",
+}
+
+
+def group_status_select_kb(callback_prefix: str) -> InlineKeyboardMarkup:
+    """Guruh yaratishda yoki statusni o'zgartirishda ko'rsatiladigan tanlov
+    tugmalari. callback_prefix masalan: 'set_group_status' yoki
+    'edit_group_status:<group_id>'."""
+    rows = [
+        [InlineKeyboardButton(text=label, callback_data=f"{callback_prefix}:{status.value}")]
+        for status, label in ENROLLMENT_STATUS_LABELS.items()
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def groups_list_kb(groups) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(
+            text=f"✏️ {g.name} — {ENROLLMENT_STATUS_LABELS[g.enrollment_status]}",
+            callback_data=f"edit_group_status:{g.id}",
+        )]
+        for g in groups
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def approval_kb(user_id: int) -> InlineKeyboardMarkup:
