@@ -73,6 +73,27 @@ async def revoke_referral(session: AsyncSession, referred_telegram_id: int) -> R
     return referral
 
 
+async def restore_referral(session: AsyncSession, referred_telegram_id: int) -> Referral | None:
+    """Avval REVOKED qilingan (chiqib ketgan) odam barcha majburiy kanallarga
+    QAYTA a'zo bo'lsa chaqiriladi - ball qaytarib beriladi (adolatli, vaqtincha
+    chiqib ketish umrbod jazolanmasligi kerak). Faqat REVOKED holatidagi
+    referalni CONFIRMED'ga qaytaradi."""
+    result = await session.execute(
+        select(Referral).where(
+            Referral.referred_telegram_id == referred_telegram_id,
+            Referral.status == ReferralStatus.REVOKED,
+        )
+    )
+    referral = result.scalar_one_or_none()
+    if referral is None:
+        return None
+    referral.status = ReferralStatus.CONFIRMED
+    referral.confirmed_at = datetime.now(timezone.utc)
+    referral.revoked_at = None
+    await session.commit()
+    return referral
+
+
 async def get_user_stats(session: AsyncSession, contest, telegram_id: int) -> tuple[int, int] | None:
     """Berilgan foydalanuvchining shu konkursdagi o'rni va tasdiqlangan referal
     sonini qaytaradi: (o'rin, soni). Agar birorta ham tasdiqlangan referali
