@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import Contest, ContestStatus, Group
 from bot.middlewares.module_guard import module_guard
+from bot.services.referral_service import get_leaderboard
 
 router = Router(name="public")
 
@@ -47,3 +48,26 @@ async def contests(message: Message, session: AsyncSession, **kwargs):
             f"Tugashi: {c.end_date.strftime('%d.%m.%Y')}"
         )
     await message.answer("\n\n".join(lines))
+
+
+@router.message(F.text == "🏆 Reyting")
+@module_guard("contest_module")
+async def public_rating(message: Message, session: AsyncSession, **kwargs):
+    # Ommaviy reyting - faqat ism-familiya ko'rsatiladi (username/nickname yo'q).
+    # Kengaytirilgan (ism + nickname) versiya faqat admin panelida ko'rinadi.
+    result = await session.execute(select(Contest).where(Contest.status == ContestStatus.ACTIVE))
+    active = result.scalars().first()
+    if active is None:
+        await message.answer("Hozircha faol konkurs yo'q.")
+        return
+
+    leaderboard = await get_leaderboard(session, active, limit=100)
+    if not leaderboard:
+        await message.answer(
+            f"🏆 <b>{active.title}</b>\n\n"
+            "Hali hech kim do'st taklif qilmagan. Birinchi bo'lib boshlang!"
+        )
+        return
+
+    lines = [f"{i}. {user.full_name} — {count} ta" for i, (user, count) in enumerate(leaderboard, start=1)]
+    await message.answer(f"🏆 <b>{active.title}</b> reytingi (Top {len(lines)})\n\n" + "\n".join(lines))
