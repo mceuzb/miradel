@@ -17,11 +17,14 @@ async def get_active_channels(session: AsyncSession) -> list[RequiredChannel]:
     return list(result.scalars().all())
 
 
-async def is_user_subscribed_to_channel(bot: Bot, telegram_id: int, channel_username: str) -> bool:
+async def is_user_subscribed_to_channel(
+    bot: Bot, telegram_id: int, channel_username: str, force: bool = False
+) -> bool:
     cache_key = (telegram_id, channel_username)
-    cached = _subscription_cache.get(cache_key)
-    if cached and (time.time() - cached[1]) < _CACHE_TTL_SECONDS:
-        return cached[0]
+    if not force:
+        cached = _subscription_cache.get(cache_key)
+        if cached and (time.time() - cached[1]) < _CACHE_TTL_SECONDS:
+            return cached[0]
 
     try:
         member = await bot.get_chat_member(chat_id=f"@{channel_username.lstrip('@')}", user_id=telegram_id)
@@ -35,12 +38,14 @@ async def is_user_subscribed_to_channel(bot: Bot, telegram_id: int, channel_user
 
 
 async def check_all_required_channels(
-    session: AsyncSession, bot: Bot, telegram_id: int
+    session: AsyncSession, bot: Bot, telegram_id: int, force: bool = False
 ) -> list[RequiredChannel]:
-    """A'zo bo'lmagan kanallar ro'yxatini qaytaradi. Bo'sh ro'yxat = hammasiga a'zo."""
+    """A'zo bo'lmagan kanallar ro'yxatini qaytaradi. Bo'sh ro'yxat = hammasiga a'zo.
+    force=True bo'lsa - eskirgan (5 daqiqagacha) keshlangan natija emas, Telegram'dan
+    HOZIRGI holat so'raladi (masalan /start yoki "✅ A'zo bo'ldim" bosilganda)."""
     channels = await get_active_channels(session)
     not_subscribed = []
     for channel in channels:
-        if not await is_user_subscribed_to_channel(bot, telegram_id, channel.channel_username):
+        if not await is_user_subscribed_to_channel(bot, telegram_id, channel.channel_username, force=force):
             not_subscribed.append(channel)
     return not_subscribed
