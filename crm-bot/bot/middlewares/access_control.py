@@ -14,7 +14,7 @@ PENDING_TEXT = (
     "Admin tasdiqlagandan so'ng botdan to'liq foydalana olasiz."
 )
 BLOCKED_TEXT = "🚫 Sizning hisobingiz bloklangan. Batafsil ma'lumot uchun administratorga murojaat qiling."
-REJECTED_TEXT = "❌ Arizangiz rad etilgan. Qayta murojaat qilish uchun \"📝 Ro'yxatdan o'tish\" tugmasini bosing."
+REJECTED_TEXT = "❌ Arizangiz rad etilgan. Qayta murojaat qilish uchun \"🎓 Kursga yozilish\" tugmasini bosing."
 
 
 class AccessControlMiddleware(BaseMiddleware):
