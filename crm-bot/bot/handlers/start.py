@@ -1,12 +1,14 @@
 from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import get_config
 from bot.database.models import User, UserRole, UserStatus
+from bot.keyboards.course_kb import course_select_kb
 from bot.keyboards.menus import contact_request_kb, guest_menu_kb, menu_for_role, remove_kb
+from bot.services.group_service import enroll_student, get_open_groups
 from bot.services.user_service import (
     create_pending_user, ensure_super_admin, get_user_by_telegram_id,
 )
@@ -85,7 +87,7 @@ async def process_full_name(message: Message, state: FSMContext):
 
 @router.message(Registration.waiting_phone, F.contact)
 async def process_phone_contact(message: Message, state: FSMContext, session: AsyncSession):
-    await _finish_registration(message, state, session, message.contact.phone_number)
+    await _ask_course_or_finish(message, state, session, message.contact.phone_number)
 
 
 @router.message(Registration.waiting_phone, F.text)
@@ -94,32 +96,73 @@ async def process_phone_text(message: Message, state: FSMContext, session: Async
     if len(phone) < 7:
         await message.answer("Noto'g'ri format. Telefon raqamingizni yuboring (masalan +998901234567):")
         return
-    await _finish_registration(message, state, session, phone)
+    await _ask_course_or_finish(message, state, session, phone)
 
 
-async def _finish_registration(message: Message, state: FSMContext, session: AsyncSession, phone: str):
-    data = await state.get_data()
-    full_name = data["full_name"]
+async def _ask_course_or_finish(message: Message, state: FSMContext, session: AsyncSession, phone: str):
+    await state.update_data(phone=phone)
 
-    user = await create_pending_user(
-        session, message.from_user.id, full_name, phone,
-        username=message.from_user.username,
-    )
-    await state.clear()
+    groups = await get_open_groups(session)
+    if not groups:
+        # Hozircha ochiq kurs yo'q - kursni tanlashsiz davom etamiz,
+        # admin keyinroq qo'lda biriktiradi
+        await _finish_registration(message, state, session, group_id=None)
+        return
 
     await message.answer(
-        "✅ Arizangiz qabul qilindi!\n"
-        "Admin tasdiqlashini kuting - tez orada sizga xabar beramiz.",
-        reply_markup=remove_kb(),
+        "Qaysi kursga yozilmoqchisiz?",
+        reply_markup=course_select_kb(groups, callback_prefix="reg_select_course"),
     )
+    await state.set_state(Registration.waiting_course)
 
-    await _notify_admins_new_request(message, session, user)
+
+@router.callback_query(Registration.waiting_course, F.data.startswith("reg_select_course:"))
+async def process_course_selection(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    value = callback.data.split(":", 1)[1]
+    group_id = None if value == "skip" else int(value)
+    await _finish_registration(callback, state, session, group_id=group_id, is_callback=True)
 
 
-async def _notify_admins_new_request(message: Message, session: AsyncSession, user: User):
+async def _finish_registration(
+    event: Message | CallbackQuery, state: FSMContext, session: AsyncSession,
+    group_id: int | None, is_callback: bool = False,
+):
+    data = await state.get_data()
+    full_name = data["full_name"]
+    phone = data["phone"]
+    from_user = event.from_user
+
+    user = await create_pending_user(
+        session, from_user.id, full_name, phone,
+        username=from_user.username,
+    )
+    if group_id is not None:
+        await enroll_student(session, group_id, user.id)
+    await state.clear()
+
+    confirm_text = "✅ Arizangiz qabul qilindi!\nAdmin tasdiqlashini kuting - tez orada sizga xabar beramiz."
+    if is_callback:
+        await event.message.edit_text(confirm_text)
+        await event.answer()
+        bot = event.bot
+    else:
+        await event.answer(confirm_text, reply_markup=remove_kb())
+        bot = event.bot
+
+    await _notify_admins_new_request(bot, session, user, group_id)
+
+
+async def _notify_admins_new_request(bot, session: AsyncSession, user: User, group_id: int | None):
     from sqlalchemy import select
 
+    from bot.database.models import Group
     from bot.keyboards.admin_kb import approval_kb
+
+    course_line = ""
+    if group_id is not None:
+        group = await session.get(Group, group_id)
+        if group is not None:
+            course_line = f"Tanlagan kursi: {group.name}\n"
 
     result = await session.execute(
         select(User).where(User.role == UserRole.ADMIN, User.status == UserStatus.APPROVED)
@@ -129,10 +172,11 @@ async def _notify_admins_new_request(message: Message, session: AsyncSession, us
         f"🆕 Yangi so'rov!\n\n"
         f"Ism: {user.full_name}\n"
         f"Telefon: {user.phone}\n"
+        f"{course_line}"
         f"Telegram ID: {user.telegram_id}"
     )
     for admin in admins:
         try:
-            await message.bot.send_message(admin.telegram_id, text, reply_markup=approval_kb(user.id))
+            await bot.send_message(admin.telegram_id, text, reply_markup=approval_kb(user.id))
         except Exception:
             continue
