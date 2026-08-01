@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.database.models import ContestStatus
 from bot.services.module_service import MODULE_KEYS
 
 
@@ -37,4 +38,18 @@ def channels_kb(channels) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🗑", callback_data=f"delete_channel:{ch.id}"),
         ])
     rows.append([InlineKeyboardButton(text="➕ Yangi kanal qo'shish", callback_data="add_channel")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def contests_kb(contests) -> InlineKeyboardMarkup:
+    rows = []
+    for c in contests:
+        if c.status == ContestStatus.ACTIVE:
+            rows.append([
+                InlineKeyboardButton(text=f"📊 #{c.id} reyting", callback_data=f"contest_rating:{c.id}"),
+                InlineKeyboardButton(text=f"🏁 #{c.id} yakunlash", callback_data=f"finish_contest:{c.id}"),
+            ])
+        elif c.status == ContestStatus.FINISHED:
+            rows.append([InlineKeyboardButton(text=f"🏆 #{c.id} g'oliblar", callback_data=f"contest_results:{c.id}")])
+    rows.append([InlineKeyboardButton(text="➕ Yangi konkurs", callback_data="new_contest")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
