@@ -3,7 +3,8 @@ from aiogram.types import Message
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.models import Contest, ContestStatus, Group
+from bot.database.models import Contest, ContestStatus, Group, GroupEnrollmentStatus
+from bot.keyboards.admin_kb import ENROLLMENT_STATUS_LABELS
 from bot.middlewares.module_guard import module_guard
 from bot.services.referral_service import get_leaderboard, get_user_stats
 
@@ -23,13 +24,22 @@ async def news(message: Message, **kwargs):
 
 @router.message(F.text == "📅 Kurslar jadvali")
 async def course_schedule(message: Message, session: AsyncSession, **kwargs):
-    result = await session.execute(select(Group).where(Group.is_archived == False))  # noqa: E712
+    # Faqat qabul OCHIQ bo'lgan (CLOSED bo'lmagan) va arxivlanmagan guruhlar ko'rsatiladi
+    result = await session.execute(
+        select(Group).where(
+            Group.is_archived == False,  # noqa: E712
+            Group.enrollment_status != GroupEnrollmentStatus.CLOSED,
+        )
+    )
     groups = result.scalars().all()
     if not groups:
-        await message.answer("Hozircha faol kurslar mavjud emas. Tez orada yangilanadi!")
+        await message.answer("Hozircha qabul ochiq kurslar mavjud emas. Tez orada yangilanadi!")
         return
-    lines = [f"• <b>{g.name}</b> — {g.subject or 'yo‘nalish belgilanmagan'}" for g in groups]
-    await message.answer("📅 <b>Kurslar jadvali</b>\n\n" + "\n".join(lines))
+    lines = [
+        f"{ENROLLMENT_STATUS_LABELS[g.enrollment_status]}\n<b>{g.name}</b> — {g.subject or 'yo‘nalish belgilanmagan'}"
+        for g in groups
+    ]
+    await message.answer("📅 <b>Kurslar jadvali</b>\n\n" + "\n\n".join(lines))
 
 
 @router.message(F.text == "🎁 Konkurslar")
