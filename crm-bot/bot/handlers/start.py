@@ -18,8 +18,7 @@ config = get_config()
 WELCOME_TEXT = (
     "👋 Assalomu alaykum! <b>Miradel Academy</b> botiga xush kelibsiz.\n\n"
     "Bu yerda o'quv markazimiz yangiliklari, kurslar jadvali va konkurslar bilan "
-    "tanishishingiz mumkin.\n\n"
-    "O'quvchi sifatida tizimga qo'shilish uchun \"📝 Ro'yxatdan o'tish\" tugmasini bosing."
+    "tanishishingiz mumkin."
 )
 
 
@@ -53,7 +52,7 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext):
     await message.answer(WELCOME_TEXT, reply_markup=guest_menu_kb())
 
 
-@router.message(F.text == "📝 Ro'yxatdan o'tish")
+@router.message(F.text == "🎓 Kursga yozilish")
 async def start_registration(message: Message, session: AsyncSession, state: FSMContext, **kwargs):
     existing = await get_user_by_telegram_id(session, message.from_user.id)
     if existing is not None and existing.status == UserStatus.APPROVED:
@@ -64,7 +63,7 @@ async def start_registration(message: Message, session: AsyncSession, state: FSM
         return
 
     await message.answer(
-        "Ro'yxatdan o'tish uchun to'liq ism-familiyangizni kiriting:",
+        "Kursga yozilish uchun to'liq ism-familiyangizni kiriting:",
         reply_markup=remove_kb(),
     )
     await state.set_state(Registration.waiting_full_name)
