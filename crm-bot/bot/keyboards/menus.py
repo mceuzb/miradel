@@ -18,7 +18,7 @@ def guest_menu_kb() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="📅 Kurslar jadvali")],
             [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
-            [KeyboardButton(text="📝 Ro'yxatdan o'tish")],
+            [KeyboardButton(text="🎓 Kursga yozilish")],
         ],
         resize_keyboard=True,
     )
@@ -71,5 +71,5 @@ def menu_for_role(role) -> ReplyKeyboardMarkup:
 # AccessControlMiddleware shu ro'yxatga qarab tekshiradi.
 PUBLIC_TEXTS = {
     "📰 Yangiliklar", "📅 Kurslar jadvali", "🎁 Konkurslar", "🏆 Reyting",
-    "📝 Ro'yxatdan o'tish",
+    "🎓 Kursga yozilish",
 }
