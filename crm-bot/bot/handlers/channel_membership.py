@@ -3,7 +3,8 @@ from aiogram.types import ChatMemberUpdated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.services.channel_service import is_required_channel
-from bot.services.referral_service import revoke_referral
+from bot.services.referral_service import restore_referral, revoke_referral
+from bot.services.subscription_service import check_all_required_channels
 
 router = Router(name="channel_membership")
 
@@ -18,24 +19,44 @@ async def on_membership_change(event: ChatMemberUpdated, session: AsyncSession):
     old_status = event.old_chat_member.status
     new_status = event.new_chat_member.status
 
-    # Faqat "a'zo edi -> chiqib ketdi/chetlatildi" o'tishi bizni qiziqtiradi
-    if old_status not in _ACTIVE_STATUSES or new_status not in _LEFT_STATUSES:
+    if old_status == new_status:
         return
-
-    # Faqat bizning majburiy kanallar ro'yxatimizdagi kanaldagi hodisa hisobga olinadi
     if not await is_required_channel(session, event.chat.username):
         return
 
-    left_user = event.new_chat_member.user
-    referral = await revoke_referral(session, left_user.id)
-    if referral is None:
-        return  # bu odam hech kimning tasdiqlangan referali bo'lmagan - hech narsa qilinmaydi
+    changed_user = event.new_chat_member.user
 
-    try:
-        await event.bot.send_message(
-            referral.referrer_telegram_id,
-            f"⚠️ Siz taklif qilgan <b>{left_user.full_name}</b> kanaldan chiqib ketdi.\n"
-            "Ball ayirildi - reytingdagi o'rningiz yangilandi.",
-        )
-    except Exception:
-        pass
+    # HOLAT 1: a'zo edi -> chiqib ketdi/chetlatildi -> ball ayiriladi
+    if old_status in _ACTIVE_STATUSES and new_status in _LEFT_STATUSES:
+        referral = await revoke_referral(session, changed_user.id)
+        if referral is None:
+            return
+        try:
+            await event.bot.send_message(
+                referral.referrer_telegram_id,
+                f"⚠️ Siz taklif qilgan <b>{changed_user.full_name}</b> kanaldan chiqib ketdi.\n"
+                "Ball ayirildi - reytingdagi o'rningiz yangilandi.",
+            )
+        except Exception:
+            pass
+        return
+
+    # HOLAT 2: chiqib ketgan edi -> qaytadan a'zo bo'ldi -> ball qaytariladi
+    # (lekin FAQAT barcha majburiy kanallarga to'liq a'zo bo'lsa - agar boshqa
+    # bir majburiy kanalga hali a'zo bo'lmasa, ball hali qaytarilmaydi)
+    if old_status in _LEFT_STATUSES and new_status in _ACTIVE_STATUSES:
+        missing = await check_all_required_channels(session, event.bot, changed_user.id, force=True)
+        if missing:
+            return  # boshqa majburiy kanal(lar)ga hali a'zo emas
+
+        referral = await restore_referral(session, changed_user.id)
+        if referral is None:
+            return
+        try:
+            await event.bot.send_message(
+                referral.referrer_telegram_id,
+                f"✅ Siz taklif qilgan <b>{changed_user.full_name}</b> kanalga qaytib a'zo bo'ldi.\n"
+                "Ball qaytarildi!",
+            )
+        except Exception:
+            pass
