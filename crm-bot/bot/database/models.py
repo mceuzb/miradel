@@ -202,13 +202,26 @@ class RequiredChannel(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class Visitor(Base):
+    """Botga kirgan HAR BIR odam (ro'yxatdan o'tgan yoki mehmon) shu yerda
+    kuzatiladi. Konkurs/referal tizimi ro'yxatdan o'tishni talab qilmagani
+    uchun ism va username shu jadvaldan olinadi (users jadvalidan emas)."""
+    __tablename__ = "visitors"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(255))
+    username: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Referral(Base):
     __tablename__ = "referrals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    # Taklif qilingan odam hisobga olinishi uchun ro'yxatdan o'tishi shart emas -
-    # shuning uchun users.id emas, xom telegram_id saqlanadi (2.4/8.2-bo'lim)
+    # Taklif qiluvchi va taklif qilingan - ikkalasi ham ro'yxatdan o'tgan bo'lishi
+    # shart emas, shuning uchun users.id emas, xom telegram_id saqlanadi (2.4/8.2-bo'lim)
+    referrer_telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
     referred_telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     status: Mapped[ReferralStatus] = mapped_column(Enum(ReferralStatus), default=ReferralStatus.PENDING)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -232,7 +245,8 @@ class ContestResult(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     contest_id: Mapped[int] = mapped_column(ForeignKey("contests.id"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    # G'olib ro'yxatdan o'tmagan bo'lishi ham mumkin - shuning uchun users.id emas
+    winner_telegram_id: Mapped[int] = mapped_column(BigInteger)
     referral_count: Mapped[int] = mapped_column(Integer, default=0)
     rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
     prize: Mapped[str | None] = mapped_column(String(255), nullable=True)
