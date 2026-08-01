@@ -51,6 +51,28 @@ async def try_confirm_referral(session: AsyncSession, referred_telegram_id: int)
     await session.commit()
 
 
+async def revoke_referral(session: AsyncSession, referred_telegram_id: int) -> Referral | None:
+    """Taklif qilingan odam kanaldan chiqib ketganda chaqiriladi (chat_member
+    eventidan). Faqat HOZIR CONFIRMED bo'lgan referalni bekor qiladi - eski
+    (bu funksiya qo'shilishidan oldingi) holatlarga tegmaydi, chunki Telegram
+    faqat HOZIRGI chiqib ketish hodisasi haqida xabar beradi, orqaga qarab
+    emas. Bekor qilingan referal bo'lsa - obyektni qaytaradi (referrerga
+    xabar berish uchun), aks holda None."""
+    result = await session.execute(
+        select(Referral).where(
+            Referral.referred_telegram_id == referred_telegram_id,
+            Referral.status == ReferralStatus.CONFIRMED,
+        )
+    )
+    referral = result.scalar_one_or_none()
+    if referral is None:
+        return None
+    referral.status = ReferralStatus.REVOKED
+    referral.revoked_at = datetime.now(timezone.utc)
+    await session.commit()
+    return referral
+
+
 async def get_user_stats(session: AsyncSession, contest, telegram_id: int) -> tuple[int, int] | None:
     """Berilgan foydalanuvchining shu konkursdagi o'rni va tasdiqlangan referal
     sonini qaytaradi: (o'rin, soni). Agar birorta ham tasdiqlangan referali
