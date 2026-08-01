@@ -53,6 +53,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     full_name: Mapped[str] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.STUDENT)
@@ -206,9 +207,12 @@ class Referral(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    referred_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    # Taklif qilingan odam hisobga olinishi uchun ro'yxatdan o'tishi shart emas -
+    # shuning uchun users.id emas, xom telegram_id saqlanadi (2.4/8.2-bo'lim)
+    referred_telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     status: Mapped[ReferralStatus] = mapped_column(Enum(ReferralStatus), default=ReferralStatus.PENDING)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Contest(Base):
