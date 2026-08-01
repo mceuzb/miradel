@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.models import Contest, ContestResult, ContestStatus, User
+from bot.database.models import Contest, ContestResult, ContestStatus, Visitor
 from bot.services.referral_service import get_leaderboard
+from bot.services.visitor_service import get_visitor
 
 
 async def get_all_contests(session: AsyncSession) -> list[Contest]:
@@ -34,7 +35,8 @@ async def create_contest(session: AsyncSession, title: str, end_date: datetime, 
 
 async def finish_contest(session: AsyncSession, contest_id: int) -> Contest | None:
     """Konkursni yakunlaydi: joriy reytingni 'muzlatib', ContestResult jadvaliga
-    g'oliblarni (sovg'alari bilan) yozib qo'yadi va statusni FINISHED qiladi."""
+    g'oliblarni (sovg'alari bilan) yozib qo'yadi va statusni FINISHED qiladi.
+    G'oliblar ro'yxatdan o'tmagan mehmon bo'lishi ham mumkin."""
     contest = await session.get(Contest, contest_id)
     if contest is None or contest.status != ContestStatus.ACTIVE:
         return None
@@ -43,11 +45,11 @@ async def finish_contest(session: AsyncSession, contest_id: int) -> Contest | No
     winners_count = len(places)
     leaderboard = await get_leaderboard(session, contest, limit=max(winners_count, 1))
 
-    for idx, (user, count) in enumerate(leaderboard[:winners_count], start=1):
+    for idx, (visitor, count) in enumerate(leaderboard[:winners_count], start=1):
         prize_text = next((p["prize"] for p in places if p["rank"] == idx), None)
         session.add(ContestResult(
             contest_id=contest.id,
-            user_id=user.id,
+            winner_telegram_id=visitor.telegram_id,
             referral_count=count,
             rank=idx,
             prize=prize_text,
@@ -59,11 +61,13 @@ async def finish_contest(session: AsyncSession, contest_id: int) -> Contest | No
     return contest
 
 
-async def get_contest_results(session: AsyncSession, contest_id: int) -> list[tuple[ContestResult, User]]:
+async def get_contest_results(session: AsyncSession, contest_id: int) -> list[tuple[ContestResult, Visitor | None]]:
     result = await session.execute(
-        select(ContestResult, User)
-        .join(User, ContestResult.user_id == User.id)
-        .where(ContestResult.contest_id == contest_id)
-        .order_by(ContestResult.rank)
+        select(ContestResult).where(ContestResult.contest_id == contest_id).order_by(ContestResult.rank)
     )
-    return list(result.all())
+    results = list(result.scalars().all())
+    paired: list[tuple[ContestResult, Visitor | None]] = []
+    for r in results:
+        visitor = await get_visitor(session, r.winner_telegram_id)
+        paired.append((r, visitor))
+    return paired
