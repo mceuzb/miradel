@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.models import Contest, ContestStatus, User, UserRole
+from bot.database.models import Contest, ContestStatus, UserRole
 from bot.keyboards.admin_kb import contests_kb
 from bot.middlewares.role_check import require_role
 from bot.services.contest_service import (
@@ -37,9 +37,12 @@ def _format_results(contest: Contest, results: list[tuple]) -> str:
     if not results:
         return f"🏁 '{contest.title}' yakunlandi.\n\nHech kim shart bajarmadi, g'oliblar aniqlanmadi."
     lines = []
-    for r, u in results:
-        username = f"@{u.username}" if u.username else "(username yo'q)"
-        lines.append(f"{r.rank}-o'rin: {u.full_name} {username} — {r.referral_count} ta — 🎁 {r.prize}")
+    for r, v in results:
+        if v is None:
+            lines.append(f"{r.rank}-o'rin: (telegram_id: {r.winner_telegram_id}) — {r.referral_count} ta — 🎁 {r.prize}")
+            continue
+        username = f"@{v.username}" if v.username else "(username yo'q)"
+        lines.append(f"{r.rank}-o'rin: {v.full_name} {username} — {r.referral_count} ta — 🎁 {r.prize}")
     return f"🏁 '{contest.title}' g'oliblari ({len(results)} ta):\n\n" + "\n".join(lines)
 
 
@@ -130,9 +133,9 @@ async def contest_rating_callback(callback: CallbackQuery, session: AsyncSession
         return
 
     lines = []
-    for i, (user, count) in enumerate(leaderboard, start=1):
-        username = f"@{user.username}" if user.username else "(username yo'q)"
-        lines.append(f"{i}. {user.full_name} {username} — {count} ta")
+    for i, (visitor, count) in enumerate(leaderboard, start=1):
+        username = f"@{visitor.username}" if visitor.username else "(username yo'q)"
+        lines.append(f"{i}. {visitor.full_name} {username} — {count} ta")
     await callback.message.answer(
         f"📊 '{contest.title}' reytingi — Top {len(lines)} (faqat admin ko'rinishi)\n\n" + "\n".join(lines)
     )
