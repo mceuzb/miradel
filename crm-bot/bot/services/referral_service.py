@@ -51,6 +51,33 @@ async def try_confirm_referral(session: AsyncSession, referred_telegram_id: int)
     await session.commit()
 
 
+async def get_user_stats(session: AsyncSession, contest, telegram_id: int) -> tuple[int, int] | None:
+    """Berilgan foydalanuvchining shu konkursdagi o'rni va tasdiqlangan referal
+    sonini qaytaradi: (o'rin, soni). Agar birorta ham tasdiqlangan referali
+    bo'lmasa - None qaytaradi."""
+    base = (
+        select(Referral.referrer_telegram_id, func.count(Referral.id).label("cnt"))
+        .where(Referral.status == ReferralStatus.CONFIRMED)
+        .where(Referral.confirmed_at >= contest.start_date)
+    )
+    if contest.end_date:
+        base = base.where(Referral.confirmed_at <= contest.end_date)
+    subq = base.group_by(Referral.referrer_telegram_id).subquery()
+
+    result = await session.execute(
+        select(subq.c.cnt).where(subq.c.referrer_telegram_id == telegram_id)
+    )
+    user_count = result.scalar_one_or_none()
+    if user_count is None:
+        return None
+
+    result = await session.execute(
+        select(func.count()).select_from(subq).where(subq.c.cnt > user_count)
+    )
+    higher_count = result.scalar_one()
+    return (higher_count + 1, user_count)
+
+
 async def get_leaderboard(session: AsyncSession, contest, limit: int | None = 100) -> list[tuple[Visitor, int]]:
     """Berilgan konkurs oralig'ida tasdiqlangan referallar soni bo'yicha
     kamayish tartibida reyting qaytaradi: [(Visitor, soni), ...].
