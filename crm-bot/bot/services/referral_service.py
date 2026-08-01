@@ -51,9 +51,10 @@ async def try_confirm_referral(session: AsyncSession, referred_telegram_id: int)
     await session.commit()
 
 
-async def get_leaderboard(session: AsyncSession, contest, limit: int = 100) -> list[tuple[Visitor, int]]:
+async def get_leaderboard(session: AsyncSession, contest, limit: int | None = 100) -> list[tuple[Visitor, int]]:
     """Berilgan konkurs oralig'ida tasdiqlangan referallar soni bo'yicha
-    kamayish tartibida reyting qaytaradi: [(Visitor, soni), ...]."""
+    kamayish tartibida reyting qaytaradi: [(Visitor, soni), ...].
+    limit=None bo'lsa - CHEKLOVSIZ, barcha ishtirokchilar qaytariladi."""
     query = (
         select(Referral.referrer_telegram_id, func.count(Referral.id).label("cnt"))
         .where(Referral.status == ReferralStatus.CONFIRMED)
@@ -61,11 +62,9 @@ async def get_leaderboard(session: AsyncSession, contest, limit: int = 100) -> l
     )
     if contest.end_date:
         query = query.where(Referral.confirmed_at <= contest.end_date)
-    query = (
-        query.group_by(Referral.referrer_telegram_id)
-        .order_by(func.count(Referral.id).desc())
-        .limit(limit)
-    )
+    query = query.group_by(Referral.referrer_telegram_id).order_by(func.count(Referral.id).desc())
+    if limit is not None:
+        query = query.limit(limit)
 
     result = await session.execute(query)
     leaderboard: list[tuple[Visitor, int]] = []
