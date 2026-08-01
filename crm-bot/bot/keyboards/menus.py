@@ -17,7 +17,7 @@ def guest_menu_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="📅 Kurslar jadvali")],
-            [KeyboardButton(text="🎁 Konkurslar")],
+            [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
             [KeyboardButton(text="📝 Ro'yxatdan o'tish")],
         ],
         resize_keyboard=True,
@@ -29,7 +29,7 @@ def admin_menu_kb() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="🆕 Yangi so'rovlar"), KeyboardButton(text="⚙️ Modullar")],
             [KeyboardButton(text="👥 Guruhlar"), KeyboardButton(text="📊 Hisobotlar")],
-            [KeyboardButton(text="📢 Majburiy kanallar")],
+            [KeyboardButton(text="📢 Majburiy kanallar"), KeyboardButton(text="🎛 Konkurslarni boshqarish")],
         ],
         resize_keyboard=True,
     )
@@ -50,6 +50,8 @@ def student_menu_kb() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="👤 Kabinetim"), KeyboardButton(text="📝 Vazifalarim")],
             [KeyboardButton(text="📅 Dars jadvali"), KeyboardButton(text="📈 Davomatim")],
+            [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
+            [KeyboardButton(text="🔗 Do'stlarni taklif qilish")],
         ],
         resize_keyboard=True,
     )
@@ -67,4 +69,7 @@ def menu_for_role(role) -> ReplyKeyboardMarkup:
 
 # Ro'yxatdan o'tmagan (guest) foydalanuvchilar ham kira oladigan tugmalar matni.
 # AccessControlMiddleware shu ro'yxatga qarab tekshiradi.
-PUBLIC_TEXTS = {"📰 Yangiliklar", "📅 Kurslar jadvali", "🎁 Konkurslar", "📝 Ro'yxatdan o'tish"}
+PUBLIC_TEXTS = {
+    "📰 Yangiliklar", "📅 Kurslar jadvali", "🎁 Konkurslar", "🏆 Reyting",
+    "📝 Ro'yxatdan o'tish",
+}
