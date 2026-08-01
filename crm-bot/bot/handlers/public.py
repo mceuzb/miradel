@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import Contest, ContestStatus, Group
 from bot.middlewares.module_guard import module_guard
-from bot.services.referral_service import get_leaderboard
+from bot.services.referral_service import get_leaderboard, get_user_stats
 
 router = Router(name="public")
 
@@ -61,6 +61,8 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
         await message.answer("Hozircha faol konkurs yo'q.")
         return
 
+    own_stats = await get_user_stats(session, active, message.from_user.id)
+
     leaderboard = await get_leaderboard(session, active, limit=100)
     if not leaderboard:
         await message.answer(
@@ -70,7 +72,21 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
         return
 
     lines = [f"{i}. {v.full_name} — {count} ta" for i, (v, count) in enumerate(leaderboard, start=1)]
-    await message.answer(f"🏆 <b>{active.title}</b> reytingi (Top {len(lines)})\n\n" + "\n".join(lines))
+    text = f"🏆 <b>{active.title}</b> reytingi (Top {len(lines)})\n\n" + "\n".join(lines)
+
+    if own_stats is None:
+        text += (
+            "\n\n📍 Siz hali reytingda emassiz - hali birorta ham tasdiqlangan "
+            "taklifingiz yo'q. \"🔗 Do'stlarni taklif qilish\" tugmasidan havolangizni oling!"
+        )
+    else:
+        rank, count = own_stats
+        if rank > len(lines):
+            text += f"\n\n📍 <b>Sizning o'rningiz: #{rank}</b> ({count} ta taklif)"
+        else:
+            text += f"\n\n📍 <b>Siz #{rank} o'rindasiz!</b>"
+
+    await message.answer(text)
 
 
 @router.message(F.text == "🔗 Do'stlarni taklif qilish")
