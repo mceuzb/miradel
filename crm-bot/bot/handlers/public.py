@@ -69,5 +69,21 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
         )
         return
 
-    lines = [f"{i}. {user.full_name} — {count} ta" for i, (user, count) in enumerate(leaderboard, start=1)]
+    lines = [f"{i}. {v.full_name} — {count} ta" for i, (v, count) in enumerate(leaderboard, start=1)]
     await message.answer(f"🏆 <b>{active.title}</b> reytingi (Top {len(lines)})\n\n" + "\n".join(lines))
+
+
+@router.message(F.text == "🔗 Do'stlarni taklif qilish")
+@module_guard("contest_module")
+async def my_referral_link(message: Message, **kwargs):
+    # Hamma - hatto ro'yxatdan o'tmagan mehmon ham - taklif havolasiga ega
+    # bo'lishi va konkursda qatnashishi mumkin (Visitor jadvali orqali kuzatiladi).
+    bot_info = await message.bot.get_me()
+    link = f"https://t.me/{bot_info.username}?start=ref_{message.from_user.id}"
+    await message.answer(
+        "🔗 <b>Sizning shaxsiy taklif havolangiz</b>\n\n"
+        f"{link}\n\n"
+        "Bu havola orqali kirgan har bir do'stingiz botni ishga tushirib, "
+        "barcha majburiy kanallarga a'zo bo'lsagina konkurs reytingingizga "
+        "qo'shiladi. Reytingni \"🏆 Reyting\" tugmasidan kuzatib boring!"
+    )
