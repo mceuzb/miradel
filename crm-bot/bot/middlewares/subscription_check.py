@@ -34,7 +34,16 @@ class SubscriptionCheckMiddleware(BaseMiddleware):
 
         bot = data["bot"]
         telegram_id = event.from_user.id
-        missing = await check_all_required_channels(session, bot, telegram_id)
+
+        # /start yoki "✅ A'zo bo'ldim" bosilganda - foydalanuvchi HOZIRGINA
+        # kanalga a'zo bo'lgan bo'lishi mumkin, shuning uchun eskirgan (5 daqiqagacha)
+        # keshlangan natijaga emas, Telegram'dan yangi holatga tayanamiz
+        force = (
+            (isinstance(event, Message) and event.text and event.text.startswith("/start"))
+            or (isinstance(event, CallbackQuery) and event.data == "check_subscription")
+        )
+
+        missing = await check_all_required_channels(session, bot, telegram_id, force=force)
         if not missing:
             # Hozir barcha kanallarga a'zo ekani tasdiqlandi - shu daqiqada unga
             # tegishli kutilayotgan referal bo'lsa, konkurs uchun tasdiqlanadi
