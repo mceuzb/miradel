@@ -35,6 +35,9 @@ async def is_required_channel(session: AsyncSession, username: str | None) -> bo
         )
     )
     return result.scalar_one_or_none() is not None
+
+
+async def toggle_channel(session: AsyncSession, channel_id: int) -> RequiredChannel | None:
     channel = await session.get(RequiredChannel, channel_id)
     if channel is None:
         return None
