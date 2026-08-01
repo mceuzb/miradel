@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import Contest, ContestStatus, UserRole
@@ -11,6 +11,7 @@ from bot.middlewares.role_check import require_role
 from bot.services.contest_service import (
     create_contest, finish_contest, get_all_contests, get_contest_results,
 )
+from bot.services.export_service import build_participants_excel
 from bot.services.referral_service import get_leaderboard
 from bot.utils.states import ContestCreation
 
@@ -167,4 +168,29 @@ async def contest_results_callback(callback: CallbackQuery, session: AsyncSessio
         return
     results = await get_contest_results(session, contest_id)
     await callback.message.answer(_format_results(contest, results))
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("contest_export:"))
+@require_role(UserRole.ADMIN)
+async def contest_export_callback(callback: CallbackQuery, session: AsyncSession, **kwargs):
+    contest_id = int(callback.data.split(":")[1])
+    contest = await session.get(Contest, contest_id)
+    if contest is None:
+        await callback.answer("Konkurs topilmadi", show_alert=True)
+        return
+
+    leaderboard = await get_leaderboard(session, contest, limit=None)
+    if not leaderboard:
+        await callback.answer("Hali hech kim referal orqali odam taklif qilmagan.", show_alert=True)
+        return
+
+    excel_bytes = build_participants_excel(contest, leaderboard)
+    safe_title = "".join(ch if ch.isalnum() else "_" for ch in contest.title)
+    filename = f"{safe_title}_ishtirokchilar.xlsx"
+
+    await callback.message.answer_document(
+        BufferedInputFile(excel_bytes, filename=filename),
+        caption=f"📥 '{contest.title}' — barcha ishtirokchilar ({len(leaderboard)} ta)",
+    )
     await callback.answer()
