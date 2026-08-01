@@ -4,6 +4,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, TelegramObject
 
 from bot.services.module_service import is_module_enabled
+from bot.services.referral_service import try_confirm_referral
 from bot.services.subscription_service import check_all_required_channels
 
 
@@ -35,6 +36,9 @@ class SubscriptionCheckMiddleware(BaseMiddleware):
         telegram_id = event.from_user.id
         missing = await check_all_required_channels(session, bot, telegram_id)
         if not missing:
+            # Hozir barcha kanallarga a'zo ekani tasdiqlandi - shu daqiqada unga
+            # tegishli kutilayotgan referal bo'lsa, konkurs uchun tasdiqlanadi
+            await try_confirm_referral(session, telegram_id)
             return await handler(event, data)
 
         buttons = [
