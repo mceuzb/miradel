@@ -53,6 +53,7 @@ class GroupEnrollmentStatus(str, enum.Enum):
 class ReferralStatus(str, enum.Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
+    REVOKED = "revoked"  # Taklif qilingan odam kanaldan chiqib ketgach
 
 
 class User(Base):
@@ -237,6 +238,7 @@ class Referral(Base):
     status: Mapped[ReferralStatus] = mapped_column(Enum(ReferralStatus), default=ReferralStatus.PENDING)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Contest(Base):
