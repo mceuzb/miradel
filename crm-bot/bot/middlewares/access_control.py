@@ -8,6 +8,7 @@ from bot.database.models import UserStatus
 from bot.keyboards.menus import PUBLIC_TEXTS
 from bot.services.referral_service import capture_referral
 from bot.services.user_service import get_user_by_telegram_id, sync_username
+from bot.services.visitor_service import upsert_visitor
 
 PENDING_TEXT = (
     "⏳ Arizangiz ko'rib chiqilmoqda.\n"
@@ -23,10 +24,13 @@ class AccessControlMiddleware(BaseMiddleware):
     tugmasi) va /start har doim ochiq - ro'yxatdan o'tmagan mehmon foydalanuvchilar
     ham shu ommaviy bo'limlarni ko'ra oladi.
 
-    Bu yerda, blok qilishdan OLDIN, referal havola orqali kirilgan bo'lsa
-    (/start ref_<id>) - taklif yozib qo'yiladi. Bu SubscriptionCheckMiddleware
-    keyinroq foydalanuvchini kanalga a'zo bo'lmagani uchun to'xtatib qo'ysa ham,
-    taklif ma'lumoti yo'qolib qolmasligi uchun shart."""
+    Bu yerda, blok qilishdan OLDIN, ikkita narsa amalga oshiriladi:
+    1. Foydalanuvchi Visitor jadvaliga qayd etiladi (konkurs/referal tizimi
+       ro'yxatdan o'tishni talab qilmaydi - shuning uchun HAR BIR odam kuzatiladi).
+    2. Referal havola orqali kirilgan bo'lsa (/start ref_<id>) - taklif yozib
+       qo'yiladi. Bu SubscriptionCheckMiddleware keyinroq foydalanuvchini
+       kanalga a'zo bo'lmagani uchun to'xtatib qo'ysa ham, taklif ma'lumoti
+       yo'qolib qolmasligi uchun shart."""
 
     async def __call__(
         self,
@@ -39,6 +43,9 @@ class AccessControlMiddleware(BaseMiddleware):
 
         session = data["session"]
         telegram_id = event.from_user.id if event.from_user else None
+
+        if telegram_id and event.from_user:
+            await upsert_visitor(session, telegram_id, event.from_user.full_name, event.from_user.username)
 
         if (
             isinstance(event, Message) and event.text and event.text.startswith("/start")
