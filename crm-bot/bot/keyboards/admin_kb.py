@@ -30,6 +30,10 @@ def groups_list_kb(groups) -> InlineKeyboardMarkup:
         )]
         for g in groups
     ]
+    rows.append([InlineKeyboardButton(text="➕ Yangi guruh qo'shish", callback_data="new_group")])
+    rows.append([InlineKeyboardButton(
+        text="📢 Eski o'quvchilarga kurs so'rash", callback_data="broadcast_course_selection",
+    )])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
