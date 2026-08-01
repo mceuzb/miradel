@@ -9,6 +9,7 @@ class Registration(StatesGroup):
 class GroupCreation(StatesGroup):
     waiting_name = State()
     waiting_subject = State()
+    waiting_status = State()
 
 
 class TaskCreation(StatesGroup):
