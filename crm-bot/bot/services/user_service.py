@@ -11,10 +11,11 @@ async def get_user_by_telegram_id(session: AsyncSession, telegram_id: int) -> Us
 
 async def create_pending_user(
     session: AsyncSession, telegram_id: int, full_name: str, phone: str | None,
-    referred_by: int | None = None,
+    username: str | None = None, referred_by: int | None = None,
 ) -> User:
     user = User(
         telegram_id=telegram_id,
+        username=username,
         full_name=full_name,
         phone=phone,
         role=UserRole.STUDENT,
@@ -25,6 +26,14 @@ async def create_pending_user(
     await session.commit()
     await session.refresh(user)
     return user
+
+
+async def sync_username(session: AsyncSession, user: User, username: str | None) -> None:
+    """Telegram username o'zgargan bo'lsa, bazadagi nusxasini yangilaydi
+    (admin reytingida to'g'ri @nickname ko'rsatish uchun)."""
+    if username and user.username != username:
+        user.username = username
+        await session.commit()
 
 
 async def get_pending_users(session: AsyncSession) -> list[User]:
