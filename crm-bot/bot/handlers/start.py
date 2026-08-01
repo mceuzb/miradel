@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.filters import CommandStart, CommandObject
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,7 @@ WELCOME_TEXT = (
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, session: AsyncSession, state: FSMContext, command: CommandObject):
+async def cmd_start(message: Message, session: AsyncSession, state: FSMContext):
     await state.clear()
     telegram_id = message.from_user.id
 
@@ -48,18 +48,8 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext, 
             await message.answer(WELCOME_TEXT, reply_markup=guest_menu_kb())
         return
 
-    # Referal orqali kirgan bo'lsa - start payload'dan referrer_id ni o'qib olamiz (8.2-bo'lim).
-    # FSM holatini o'zgartirmasdan (set_state chaqirmasdan) shunchaki state ma'lumotiga
-    # yozib qo'yamiz - shuning uchun bu mehmon rejimida bloklanmaydi, keyinroq
-    # "Ro'yxatdan o'tish" bosilganda ishlatiladi.
-    referrer_telegram_id = None
-    if command.args and command.args.startswith("ref_"):
-        try:
-            referrer_telegram_id = int(command.args.removeprefix("ref_"))
-        except ValueError:
-            referrer_telegram_id = None
-    await state.update_data(referrer_telegram_id=referrer_telegram_id)
-
+    # Diqqat: ref_ havoladagi referal AccessControlMiddleware'da allaqachon
+    # DB'ga (Referral, status=pending) yozib qo'yilgan - bu yerda qayta ishlash shart emas.
     await message.answer(WELCOME_TEXT, reply_markup=guest_menu_kb())
 
 
@@ -111,15 +101,11 @@ async def process_phone_text(message: Message, state: FSMContext, session: Async
 async def _finish_registration(message: Message, state: FSMContext, session: AsyncSession, phone: str):
     data = await state.get_data()
     full_name = data["full_name"]
-    referrer_telegram_id = data.get("referrer_telegram_id")
 
-    referred_by = None
-    if referrer_telegram_id:
-        referrer = await get_user_by_telegram_id(session, referrer_telegram_id)
-        if referrer is not None:
-            referred_by = referrer.id
-
-    user = await create_pending_user(session, message.from_user.id, full_name, phone, referred_by)
+    user = await create_pending_user(
+        session, message.from_user.id, full_name, phone,
+        username=message.from_user.username,
+    )
     await state.clear()
 
     await message.answer(
