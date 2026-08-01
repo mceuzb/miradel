@@ -1,4 +1,4 @@
-  from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
