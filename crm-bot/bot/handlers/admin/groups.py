@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import Group, GroupEnrollmentStatus, UserRole
 from bot.keyboards.admin_kb import ENROLLMENT_STATUS_LABELS, group_status_select_kb, groups_list_kb
+from bot.keyboards.course_kb import course_select_kb
 from bot.middlewares.role_check import require_role
+from bot.services.group_service import get_open_groups, get_students_without_group
 from bot.utils.states import GroupCreation
 
 router = Router(name="admin_groups")
@@ -17,21 +19,19 @@ router = Router(name="admin_groups")
 async def list_groups(message: Message, session: AsyncSession, **kwargs):
     result = await session.execute(select(Group).where(Group.is_archived == False))  # noqa: E712
     groups = result.scalars().all()
-    if not groups:
-        await message.answer("Hozircha guruhlar yo'q.\n\nYangi guruh yaratish uchun /new_group buyrug'ini yuboring.")
-        return
-    await message.answer(
-        "👥 Guruhlar ro'yxati - statusni o'zgartirish uchun guruh ustiga bosing:\n\n"
-        "Yangi guruh yaratish uchun /new_group buyrug'ini yuboring.",
-        reply_markup=groups_list_kb(groups),
+    text = (
+        "👥 Guruhlar ro'yxati - statusni o'zgartirish uchun guruh ustiga bosing:"
+        if groups else "Hozircha guruhlar yo'q."
     )
+    await message.answer(text, reply_markup=groups_list_kb(groups))
 
 
-@router.message(F.text == "/new_group")
+@router.callback_query(F.data == "new_group")
 @require_role(UserRole.ADMIN)
-async def new_group_start(message: Message, state: FSMContext, **kwargs):
-    await message.answer("Yangi guruh nomini kiriting:")
+async def new_group_start(callback: CallbackQuery, state: FSMContext, **kwargs):
+    await callback.message.answer("Yangi guruh nomini kiriting:")
     await state.set_state(GroupCreation.waiting_name)
+    await callback.answer()
 
 
 @router.message(GroupCreation.waiting_name)
@@ -97,3 +97,51 @@ async def set_group_status(callback: CallbackQuery, session: AsyncSession, **kwa
         f"✅ '{group.name}' guruhi statusi yangilandi: {ENROLLMENT_STATUS_LABELS[group.enrollment_status]}"
     )
     await callback.answer("Yangilandi")
+
+
+@router.callback_query(F.data == "broadcast_course_selection")
+@require_role(UserRole.ADMIN)
+async def broadcast_course_selection(callback: CallbackQuery, session: AsyncSession, **kwargs):
+    groups = await get_open_groups(session)
+    if not groups:
+        await callback.answer("Hozircha ochiq (qabul faol) kurs yo'q.", show_alert=True)
+        return
+
+    students = await get_students_without_group(session)
+    if not students:
+        await callback.answer("Kursi tanlanmagan eski o'quvchi topilmadi - hammasi allaqachon biriktirilgan.", show_alert=True)
+        return
+
+    sent = 0
+    for student in students:
+        try:
+            await callback.bot.send_message(
+                student.telegram_id,
+                "📚 Assalomu alaykum! Endi bizda kursingizni tanlash imkoniyati qo'shildi.\n\n"
+                "Qaysi kursga yozilmoqchisiz?",
+                reply_markup=course_select_kb(groups, callback_prefix="pick_course", include_skip=False),
+            )
+            sent += 1
+        except Exception:
+            continue
+
+    await callback.answer(f"✅ {sent} ta o'quvchiga xabar yuborildi (jami: {len(students)} ta).", show_alert=True)
+
+
+@router.callback_query(F.data.startswith("pick_course:"))
+async def pick_course_callback(callback: CallbackQuery, session: AsyncSession, db_user, **kwargs):
+    from bot.services.group_service import enroll_student
+
+    if db_user is None:
+        await callback.answer()
+        return
+
+    group_id = int(callback.data.split(":", 1)[1])
+    group = await session.get(Group, group_id)
+    if group is None:
+        await callback.answer("Kurs topilmadi", show_alert=True)
+        return
+
+    await enroll_student(session, group_id, db_user.id)
+    await callback.message.edit_text(f"✅ '{group.name}' kursiga yozildingiz!")
+    await callback.answer()
