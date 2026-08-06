@@ -43,6 +43,11 @@ class ContestStatus(str, enum.Enum):
     FINISHED = "finished"
 
 
+class ContestType(str, enum.Enum):
+    REFERRAL = "referral"  # Eng ko'p do'st taklif qilgan g'olib bo'ladi
+    RANDOM = "random"      # Ishtirokchilar ro'yxati shakllantiriladi, g'olib admin tomonidan tanlanadi
+
+
 class GroupEnrollmentStatus(str, enum.Enum):
     OPEN = "open"            # 🟢 Qabul ochiq
     FILLING = "filling"      # 🟡 To'lmoqda
@@ -246,11 +251,24 @@ class Contest(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
+    contest_type: Mapped[ContestType] = mapped_column(Enum(ContestType), default=ContestType.REFERRAL)
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     prizes: Mapped[dict] = mapped_column(JSON, default=dict)
     min_requirement: Mapped[int] = mapped_column(Integer, default=1)
     status: Mapped[ContestStatus] = mapped_column(Enum(ContestStatus), default=ContestStatus.DRAFT)
+
+
+class ContestParticipant(Base):
+    """RANDOM turdagi konkurslar uchun - ishtirokchi ro'yxati. ID sifatida
+    userning o'z telegram_id'si ishlatiladi (alohida ID generatsiya qilinmaydi)."""
+    __tablename__ = "contest_participants"
+    __table_args__ = (UniqueConstraint("contest_id", "telegram_id", name="uq_contest_participant"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    contest_id: Mapped[int] = mapped_column(ForeignKey("contests.id"))
+    telegram_id: Mapped[int] = mapped_column(BigInteger)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class ContestResult(Base):
