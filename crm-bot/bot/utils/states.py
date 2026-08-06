@@ -28,7 +28,12 @@ class ChannelCreation(StatesGroup):
 
 
 class ContestCreation(StatesGroup):
+    waiting_type = State()
     waiting_title = State()
     waiting_end_date = State()
     waiting_winners_count = State()
     waiting_prize = State()
+
+
+class RandomContestFinish(StatesGroup):
+    waiting_winner_id = State()
