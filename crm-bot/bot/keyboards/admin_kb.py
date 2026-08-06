@@ -1,7 +1,12 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.database.models import ContestStatus, GroupEnrollmentStatus
+from bot.database.models import ContestStatus, ContestType, GroupEnrollmentStatus
 from bot.services.module_service import MODULE_KEYS
+
+CONTEST_TYPE_LABELS = {
+    ContestType.REFERRAL: "🏆 Referal asosida (eng ko'p taklif)",
+    ContestType.RANDOM: "🎲 Random konkurs (tasodifiy tanlov)",
+}
 
 ENROLLMENT_STATUS_LABELS = {
     GroupEnrollmentStatus.OPEN: "🟢 Qabul ochiq",
@@ -74,17 +79,32 @@ def channels_kb(channels) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
+def contest_type_select_kb() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text=label, callback_data=f"contest_type:{ctype.value}")]
+        for ctype, label in CONTEST_TYPE_LABELS.items()
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 def contests_kb(contests) -> InlineKeyboardMarkup:
     rows = []
     for c in contests:
+        type_icon = "🎲" if c.contest_type == ContestType.RANDOM else "🏆"
         if c.status == ContestStatus.ACTIVE:
-            rows.append([
-                InlineKeyboardButton(text=f"📊 #{c.id} reyting", callback_data=f"contest_rating:{c.id}"),
-                InlineKeyboardButton(text=f"🏁 #{c.id} yakunlash", callback_data=f"finish_contest:{c.id}"),
-            ])
+            if c.contest_type == ContestType.RANDOM:
+                rows.append([
+                    InlineKeyboardButton(text=f"{type_icon} #{c.id} ishtirokchilar", callback_data=f"contest_participants_count:{c.id}"),
+                    InlineKeyboardButton(text=f"🏁 #{c.id} g'oliblarni e'lon qilish", callback_data=f"finish_random_contest:{c.id}"),
+                ])
+            else:
+                rows.append([
+                    InlineKeyboardButton(text=f"{type_icon} #{c.id} reyting", callback_data=f"contest_rating:{c.id}"),
+                    InlineKeyboardButton(text=f"🏁 #{c.id} yakunlash", callback_data=f"finish_contest:{c.id}"),
+                ])
             rows.append([InlineKeyboardButton(text=f"📥 #{c.id} Excel yuklab olish", callback_data=f"contest_export:{c.id}")])
         elif c.status == ContestStatus.FINISHED:
-            rows.append([InlineKeyboardButton(text=f"🏆 #{c.id} g'oliblar", callback_data=f"contest_results:{c.id}")])
+            rows.append([InlineKeyboardButton(text=f"{type_icon} #{c.id} g'oliblar", callback_data=f"contest_results:{c.id}")])
             rows.append([InlineKeyboardButton(text=f"📥 #{c.id} Excel yuklab olish", callback_data=f"contest_export:{c.id}")])
     rows.append([InlineKeyboardButton(text="➕ Yangi konkurs", callback_data="new_contest")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
