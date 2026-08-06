@@ -6,10 +6,11 @@ from openpyxl.styles import Font
 from bot.database.models import Contest, Visitor
 
 
-def build_participants_excel(contest: Contest, leaderboard: list[tuple[Visitor, int]]) -> bytes:
-    """Konkurs ishtirokchilari (referal keltirganlar) ro'yxatini Excel fayl
-    ko'rinishida (bytes) qaytaradi - admin shu ma'lumotni to'g'ridan-to'g'ri
-    yuklab olishi uchun."""
+def build_participants_excel(contest: Contest, leaderboard: list[tuple[Visitor, int | None]]) -> bytes:
+    """Konkurs ishtirokchilari ro'yxatini Excel fayl ko'rinishida (bytes)
+    qaytaradi. Referal konkursida 'Referal soni' ustuniga son, RANDOM
+    konkursida esa '-' yoziladi - LEKIN jadval tartibi (ustunlar) ikkalasida
+    ham AYNAN BIR XIL bo'ladi."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Ishtirokchilar"
@@ -25,7 +26,7 @@ def build_participants_excel(contest: Contest, leaderboard: list[tuple[Visitor, 
             visitor.full_name,
             f"@{visitor.username}" if visitor.username else "-",
             visitor.telegram_id,
-            count,
+            count if count is not None else "-",
         ])
 
     for row in ws.iter_rows(min_row=2):
