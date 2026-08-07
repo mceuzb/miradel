@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, TelegramObject
 
 from bot.database.models import UserStatus
-from bot.keyboards.menus import PUBLIC_TEXTS
+from bot.keyboards.menus import PUBLIC_CALLBACK_DATA, PUBLIC_CALLBACK_PREFIXES, PUBLIC_TEXTS
 from bot.services.referral_service import capture_referral
 from bot.services.user_service import get_user_by_telegram_id, sync_username
 from bot.services.visitor_service import upsert_visitor
@@ -67,6 +67,14 @@ class AccessControlMiddleware(BaseMiddleware):
         # /start va ommaviy (guest) tugmalar - hech qanday tasdiqlashsiz ochiq
         if isinstance(event, Message) and event.text:
             if event.text.startswith("/start") or event.text in PUBLIC_TEXTS:
+                return await handler(event, data)
+
+        # MUHIM: inline tugmalar (callback) ham mehmonlar uchun ochiq bo'lishi kerak -
+        # aks holda ro'yxatdan o'tmagan foydalanuvchilar "🎲 Qatnashish",
+        # "✅ A'zo bo'ldim" kabi tugmalarni bosolmaydi (faqat matn tugmalari
+        # emas, callback'lar ham tekshirilishi shart edi)
+        if isinstance(event, CallbackQuery) and event.data:
+            if event.data in PUBLIC_CALLBACK_DATA or event.data.startswith(PUBLIC_CALLBACK_PREFIXES):
                 return await handler(event, data)
 
         state: FSMContext | None = data.get("state")
