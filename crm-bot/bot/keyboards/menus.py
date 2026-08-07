@@ -74,3 +74,10 @@ PUBLIC_TEXTS = {
     "📰 Yangiliklar", "📅 Kurslar jadvali", "🎁 Konkurslar", "🏆 Reyting",
     "🔗 Do'stlarni taklif qilish", "🎓 Kursga yozilish",
 }
+
+# Ro'yxatdan o'tmagan (guest) foydalanuvchilar ham bosa oladigan INLINE
+# tugmalar (callback_data). AccessControlMiddleware shu ro'yxatga qarab
+# tekshiradi - matn tugmalaridan farqli o'laroq, callbacklar avval bu yerda
+# alohida tasdiqlanmasa, bloklanib qolar edi.
+PUBLIC_CALLBACK_DATA = {"check_subscription", "get_referral_link"}
+PUBLIC_CALLBACK_PREFIXES = ("join_random:",)
