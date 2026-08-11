@@ -108,3 +108,26 @@ def contests_kb(contests) -> InlineKeyboardMarkup:
             rows.append([InlineKeyboardButton(text=f"📥 #{c.id} Excel yuklab olish", callback_data=f"contest_export:{c.id}")])
     rows.append([InlineKeyboardButton(text="➕ Yangi konkurs", callback_data="new_contest")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def broadcast_confirm_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Yuborish", callback_data="broadcast_confirm_send")],
+        [InlineKeyboardButton(text="❌ Bekor qilish", callback_data="broadcast_cancel")],
+    ])
+
+
+def broadcasts_list_kb(broadcasts) -> InlineKeyboardMarkup:
+    rows = []
+    for b in broadcasts:
+        preview = (b.text[:24] + "…") if len(b.text) > 24 else b.text
+        status = "⏳ Yuborilmoqda" if b.is_sending else "✅ Yakunlangan"
+        rows.append([InlineKeyboardButton(text=f"#{b.id} {preview} ({status})", callback_data=f"broadcast_stats:{b.id}")])
+    rows.append([InlineKeyboardButton(text="➕ Yangi ommaviy xabar", callback_data="new_broadcast")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def broadcast_stats_kb(broadcast_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📥 Excel (qiziqqanlar ro'yxati)", callback_data=f"broadcast_export:{broadcast_id}")],
+    ])
