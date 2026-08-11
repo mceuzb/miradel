@@ -281,3 +281,42 @@ class ContestResult(Base):
     referral_count: Mapped[int] = mapped_column(Integer, default=0)
     rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
     prize: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
+class Broadcast(Base):
+    """Admin tomonidan yuborilgan ommaviy xabar (odatda yangi kurs haqida)."""
+    __tablename__ = "broadcasts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    admin_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id"), nullable=True)
+    text: Mapped[str] = mapped_column(Text)
+    total_targeted: Mapped[int] = mapped_column(Integer, default=0)
+    sent_count: Mapped[int] = mapped_column(Integer, default=0)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    is_sending: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BroadcastClick(Base):
+    """Xabardagi inline tugmani bosganlar - 'ko'rdi/qiziqdi' statistikasi uchun."""
+    __tablename__ = "broadcast_clicks"
+    __table_args__ = (UniqueConstraint("broadcast_id", "telegram_id", name="uq_broadcast_click"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    broadcast_id: Mapped[int] = mapped_column(ForeignKey("broadcasts.id"))
+    telegram_id: Mapped[int] = mapped_column(BigInteger)
+    clicked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BroadcastLead(Base):
+    """Tugmani bosib, ism+telefon qoldirganlar - 'kursga yozildi' ro'yxati."""
+    __tablename__ = "broadcast_leads"
+    __table_args__ = (UniqueConstraint("broadcast_id", "telegram_id", name="uq_broadcast_lead"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    broadcast_id: Mapped[int] = mapped_column(ForeignKey("broadcasts.id"))
+    telegram_id: Mapped[int] = mapped_column(BigInteger)
+    full_name: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(32))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
