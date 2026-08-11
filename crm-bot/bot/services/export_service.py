@@ -3,7 +3,7 @@ import io
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
-from bot.database.models import Contest, Visitor
+from bot.database.models import BroadcastLead, Contest, Visitor
 
 
 def build_participants_excel(contest: Contest, leaderboard: list[tuple[Visitor, int | None]]) -> bytes:
@@ -38,6 +38,42 @@ def build_participants_excel(contest: Contest, leaderboard: list[tuple[Visitor, 
     ws.column_dimensions["C"].width = 20
     ws.column_dimensions["D"].width = 16
     ws.column_dimensions["E"].width = 14
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    return buffer.getvalue()
+
+
+def build_leads_excel(leads: list[BroadcastLead]) -> bytes:
+    """Ommaviy xabar orqali kelgan (ism+telefon qoldirgan) qiziqqan
+    odamlar ro'yxatini Excel fayl ko'rinishida qaytaradi."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Qiziqqanlar"
+
+    headers = ["№", "Ism-familiya", "Telefon", "Telegram ID", "Sana"]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(name="Arial", bold=True)
+
+    for i, lead in enumerate(leads, start=1):
+        ws.append([
+            i,
+            lead.full_name,
+            lead.phone,
+            lead.telegram_id,
+            lead.created_at.strftime("%d.%m.%Y %H:%M") if lead.created_at else "-",
+        ])
+
+    for row in ws.iter_rows(min_row=2):
+        for cell in row:
+            cell.font = Font(name="Arial")
+
+    ws.column_dimensions["A"].width = 6
+    ws.column_dimensions["B"].width = 28
+    ws.column_dimensions["C"].width = 18
+    ws.column_dimensions["D"].width = 16
+    ws.column_dimensions["E"].width = 18
 
     buffer = io.BytesIO()
     wb.save(buffer)
