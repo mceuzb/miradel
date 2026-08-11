@@ -31,6 +31,7 @@ def admin_menu_kb() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="🆕 Yangi so'rovlar"), KeyboardButton(text="⚙️ Modullar")],
             [KeyboardButton(text="👥 Guruhlar"), KeyboardButton(text="📊 Hisobotlar")],
             [KeyboardButton(text="📢 Majburiy kanallar"), KeyboardButton(text="🎛 Konkurslarni boshqarish")],
+            [KeyboardButton(text="📢 Ommaviy xabar")],
         ],
         resize_keyboard=True,
     )
@@ -80,4 +81,4 @@ PUBLIC_TEXTS = {
 # tekshiradi - matn tugmalaridan farqli o'laroq, callbacklar avval bu yerda
 # alohida tasdiqlanmasa, bloklanib qolar edi.
 PUBLIC_CALLBACK_DATA = {"check_subscription", "get_referral_link"}
-PUBLIC_CALLBACK_PREFIXES = ("join_random:",)
+PUBLIC_CALLBACK_PREFIXES = ("join_random:", "broadcast_interest:")
