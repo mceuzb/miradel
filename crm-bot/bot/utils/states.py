@@ -37,3 +37,14 @@ class ContestCreation(StatesGroup):
 
 class RandomContestFinish(StatesGroup):
     waiting_winner_id = State()
+
+
+class BroadcastCreation(StatesGroup):
+    waiting_text = State()
+    waiting_group = State()
+    waiting_confirm = State()
+
+
+class BroadcastLeadCapture(StatesGroup):
+    waiting_name = State()
+    waiting_phone = State()
