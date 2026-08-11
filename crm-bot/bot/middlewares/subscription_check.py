@@ -6,13 +6,19 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMar
 from bot.services.module_service import is_module_enabled
 from bot.services.referral_service import try_confirm_referral
 from bot.services.subscription_service import check_all_required_channels
+from bot.utils.states import BroadcastLeadCapture
+
+_BROADCAST_LEAD_STATES = {BroadcastLeadCapture.waiting_name.state, BroadcastLeadCapture.waiting_phone.state}
 
 
 class SubscriptionCheckMiddleware(BaseMiddleware):
     """7-bo'lim: majburiy obuna moduli yoqilgan bo'lsa, HAR BIR foydalanuvchi -
     hatto hali ro'yxatdan o'tmagan mehmon ham - /start bosgan zahoti tekshiriladi.
     Ro'yxatdan o'tishdan oldin ishlaydi, chunki bu middleware AccessControl'dan
-    keyin, lekin har qanday handler'dan oldin ishga tushadi."""
+    keyin, lekin har qanday handler'dan oldin ishga tushadi.
+
+    ISTISNO: ommaviy xabar ("kursga qiziqaman") oqimi - bu yerda maqsad tezkor
+    lid yig'ish, shuning uchun majburiy obuna talab qilinmaydi."""
 
     async def __call__(
         self,
@@ -25,6 +31,17 @@ class SubscriptionCheckMiddleware(BaseMiddleware):
 
         if event.from_user is None:
             return await handler(event, data)
+
+        # Istisno 1: "📚 Batafsil / Qiziqaman" tugmasining o'zi
+        if isinstance(event, CallbackQuery) and event.data and event.data.startswith("broadcast_interest:"):
+            return await handler(event, data)
+
+        # Istisno 2: shu tugmadan keyingi ism/telefon so'rash bosqichlari
+        state = data.get("state")
+        if state is not None:
+            current_state = await state.get_state()
+            if current_state in _BROADCAST_LEAD_STATES:
+                return await handler(event, data)
 
         # "✅ A'zo bo'ldim" tugmasi bosilganda ham shu yerdan qayta tekshiriladi -
         # agar hali ham a'zo bo'lmasa, pastda yana taklif ko'rsatiladi
