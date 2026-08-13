@@ -260,9 +260,12 @@ class ReferralPointsLedger(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     recipient_telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
     points: Mapped[int] = mapped_column(Integer)
-    source_referred_telegram_id: Mapped[int] = mapped_column(BigInteger)
+    source_referred_telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
     distance: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # False bo'lsa - manba (source_referred_telegram_id) kanaldan chiqib ketgani
+    # uchun bu ball vaqtincha hisobga olinmaydi (qaytib kirsa True'ga qaytadi)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class Contest(Base):
