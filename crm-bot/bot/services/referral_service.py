@@ -106,7 +106,12 @@ async def revoke_referral(session: AsyncSession, referred_telegram_id: int) -> R
     (bu funksiya qo'shilishidan oldingi) holatlarga tegmaydi, chunki Telegram
     faqat HOZIRGI chiqib ketish hodisasi haqida xabar beradi, orqaga qarab
     emas. Bekor qilingan referal bo'lsa - obyektni qaytaradi (referrerga
-    xabar berish uchun), aks holda None."""
+    xabar berish uchun), aks holda None.
+
+    MUHIM: agar bu odam zanjirda ishtirok etib, ajdodlariga ball bergan bo'lsa
+    (ReferralPointsLedger'da source_referred_telegram_id sifatida qatnashgan
+    bo'lsa) - o'sha ballar HAM vaqtincha bekor qilinadi (active=False), toki
+    u qaytadan a'zo bo'lguncha."""
     result = await session.execute(
         select(Referral).where(
             Referral.referred_telegram_id == referred_telegram_id,
@@ -118,15 +123,26 @@ async def revoke_referral(session: AsyncSession, referred_telegram_id: int) -> R
         return None
     referral.status = ReferralStatus.REVOKED
     referral.revoked_at = datetime.now(timezone.utc)
+
+    ledger_result = await session.execute(
+        select(ReferralPointsLedger).where(
+            ReferralPointsLedger.source_referred_telegram_id == referred_telegram_id,
+            ReferralPointsLedger.active == True,  # noqa: E712
+        )
+    )
+    for entry in ledger_result.scalars().all():
+        entry.active = False
+
     await session.commit()
     return referral
 
 
 async def restore_referral(session: AsyncSession, referred_telegram_id: int) -> Referral | None:
     """Avval REVOKED qilingan (chiqib ketgan) odam barcha majburiy kanallarga
-    QAYTA a'zo bo'lsa chaqiriladi. FAQAT statusni CONFIRMED'ga qaytaradi -
-    zanjirli ball tizimi QAYTA ISHGA TUSHMAYDI (qayta qo'shilish yangi ball
-    bermaydi, faqat avval bergan ballari saqlanib qoladi)."""
+    QAYTA a'zo bo'lsa chaqiriladi. FAQAT statusni CONFIRMED'ga qaytaradi va
+    avval bekor qilingan zanjir ballarini TIKLAYDI - zanjirli ball tizimi
+    QAYTA ISHGA TUSHMAYDI (qayta qo'shilish YANGI ball bermaydi, faqat
+    avvalgi ballari qaytariladi)."""
     result = await session.execute(
         select(Referral).where(
             Referral.referred_telegram_id == referred_telegram_id,
@@ -139,6 +155,16 @@ async def restore_referral(session: AsyncSession, referred_telegram_id: int) -> 
     referral.status = ReferralStatus.CONFIRMED
     referral.confirmed_at = datetime.now(timezone.utc)
     referral.revoked_at = None
+
+    ledger_result = await session.execute(
+        select(ReferralPointsLedger).where(
+            ReferralPointsLedger.source_referred_telegram_id == referred_telegram_id,
+            ReferralPointsLedger.active == False,  # noqa: E712
+        )
+    )
+    for entry in ledger_result.scalars().all():
+        entry.active = True
+
     await session.commit()
     return referral
 
@@ -166,6 +192,7 @@ async def _compute_all_scores(session: AsyncSession, contest) -> dict[int, int]:
 
     ledger_query = (
         select(ReferralPointsLedger.recipient_telegram_id, func.sum(ReferralPointsLedger.points).label("pts"))
+        .where(ReferralPointsLedger.active == True)  # noqa: E712
         .where(ReferralPointsLedger.created_at >= contest.start_date)
     )
     if contest.end_date:
