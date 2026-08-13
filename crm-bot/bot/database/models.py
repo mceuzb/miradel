@@ -342,3 +342,105 @@ class BroadcastLead(Base):
     full_name: Mapped[str] = mapped_column(String(255))
     phone: Mapped[str] = mapped_column(String(32))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReferralCardOrder(Base):
+    """Jismoniy referal kartochkasi buyurtmasi - kartada ism, konkurs haqida
+    ma'lumot va userning referal havolasiga bog'langan QR kod bo'ladi."""
+    __tablename__ = "referral_card_orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    full_name: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(32))
+    pickup_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+# ============================================================
+# ALPINO - marketing/geymifikatsiya mini-app (TZ v3)
+# ============================================================
+
+class AlpinoPointsStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class AlpinoOrderStatus(str, enum.Enum):
+    PENDING = "pending"
+    DELIVERED = "delivered"
+
+
+class AlpinoReferralStatus(str, enum.Enum):
+    CAME = "came"
+    PAID = "paid"
+
+
+class AlpinoPointsHistory(Base):
+    """O'qituvchi ball TAKLIF qiladi (pending), Admin TASDIQLAYDI/RAD ETADI."""
+    __tablename__ = "alpino_points_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    amount: Mapped[int] = mapped_column(Integer)
+    category: Mapped[str] = mapped_column(String(64))  # vazifa/topshiriq/imtihon/referral/musobaqa
+    status: Mapped[AlpinoPointsStatus] = mapped_column(Enum(AlpinoPointsStatus), default=AlpinoPointsStatus.PENDING)
+    teacher_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reject_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AlpinoReferral(Base):
+    __tablename__ = "alpino_referrals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    referred_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[AlpinoReferralStatus] = mapped_column(Enum(AlpinoReferralStatus), default=AlpinoReferralStatus.CAME)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AlpinoMarketOrder(Base):
+    __tablename__ = "alpino_market_orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    item_name: Mapped[str] = mapped_column(String(255))
+    cost_points: Mapped[int] = mapped_column(Integer)
+    status: Mapped[AlpinoOrderStatus] = mapped_column(Enum(AlpinoOrderStatus), default=AlpinoOrderStatus.PENDING)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AlpinoCategoryLimit(Base):
+    __tablename__ = "alpino_category_limits"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(64), unique=True)
+    max_points: Mapped[int] = mapped_column(Integer)
+    set_by_admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AlpinoWeeklyWinner(Base):
+    __tablename__ = "alpino_weekly_winners"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(64))
+    winner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    period: Mapped[str] = mapped_column(String(32))  # masalan "2026-W33"
+    points_given: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AlpinoFunnelEvent(Base):
+    """User -> O'quvchi konversiya voronkasi. telegram_id ishlatiladi (users.id
+    emas), chunki 'User' roli hali users jadvalida umuman bo'lmasligi mumkin."""
+    __tablename__ = "alpino_funnel_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    event: Mapped[str] = mapped_column(String(32))  # viewed_alpino / clicked_enroll / enrolled
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
