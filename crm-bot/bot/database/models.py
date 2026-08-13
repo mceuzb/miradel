@@ -244,6 +244,25 @@ class Referral(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # True bo'lsa - bu tasdiqlanish ZANJIRLI ball sxemasi orqali qayta ishlangan
+    # (yangi tizim ishga tushirilgandan keyingi tasdiqlanish). False (eski
+    # yozuvlar) - eski sxema bo'yicha faqat 1 ball sifatida hisoblanadi.
+    chain_processed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ReferralPointsLedger(Base):
+    """Zanjirli ball tizimi: har bir YANGI tasdiqlanish zanjirdagi barcha
+    ajdodlarga masofasiga teng ball beradi. Faqat yangi (birinchi marta)
+    tasdiqlanishlarda yoziladi - qayta qo'shilish (rejoin) va eski
+    tasdiqlanishlar bu yerga yozilmaydi."""
+    __tablename__ = "referral_points_ledger"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recipient_telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    points: Mapped[int] = mapped_column(Integer)
+    source_referred_telegram_id: Mapped[int] = mapped_column(BigInteger)
+    distance: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Contest(Base):
