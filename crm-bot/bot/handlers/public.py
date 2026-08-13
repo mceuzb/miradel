@@ -114,7 +114,7 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
         )
         return
 
-    lines = [f"{i}. {v.full_name} — {count} ta" for i, (v, count) in enumerate(leaderboard, start=1)]
+    lines = [f"{i}. {v.full_name} — {count} ball" for i, (v, count) in enumerate(leaderboard, start=1)]
     text = f"🏆 <b>{active.title}</b> reytingi (Top {len(lines)})\n\n" + "\n".join(lines)
 
     if own_stats is None:
@@ -125,7 +125,7 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
     else:
         rank, count = own_stats
         if rank > len(lines):
-            text += f"\n\n📍 <b>Sizning o'rningiz: #{rank}</b> ({count} ta taklif)"
+            text += f"\n\n📍 <b>Sizning o'rningiz: #{rank}</b> ({count} ball)"
         else:
             text += f"\n\n📍 <b>Siz #{rank} o'rindasiz!</b>"
 
