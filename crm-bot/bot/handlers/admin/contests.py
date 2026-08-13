@@ -48,7 +48,7 @@ def _format_results(contest: Contest, results: list[tuple]) -> str:
         return f"🏁 '{contest.title}' yakunlandi.\n\nHech kim shart bajarmadi, g'oliblar aniqlanmadi."
     lines = []
     for r, v in results:
-        count_part = f" — {r.referral_count} ta" if contest.contest_type == ContestType.REFERRAL else ""
+        count_part = f" — {r.referral_count} ball" if contest.contest_type == ContestType.REFERRAL else ""
         if v is None:
             lines.append(f"{r.rank}-o'rin: (telegram_id: {r.winner_telegram_id}){count_part} — 🎁 {r.prize}")
             continue
@@ -156,7 +156,7 @@ async def contest_rating_callback(callback: CallbackQuery, session: AsyncSession
     lines = []
     for i, (visitor, count) in enumerate(leaderboard, start=1):
         username = f"@{visitor.username}" if visitor.username else "(username yo'q)"
-        lines.append(f"{i}. {visitor.full_name} {username} — {count} ta")
+        lines.append(f"{i}. {visitor.full_name} {username} — {count} ball")
     await callback.message.answer(
         f"📊 '{contest.title}' reytingi — Top {len(lines)} (faqat admin ko'rinishi)\n\n" + "\n".join(lines)
     )
