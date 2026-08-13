@@ -8,14 +8,14 @@ from bot.database.models import BroadcastLead, Contest, Visitor
 
 def build_participants_excel(contest: Contest, leaderboard: list[tuple[Visitor, int | None]]) -> bytes:
     """Konkurs ishtirokchilari ro'yxatini Excel fayl ko'rinishida (bytes)
-    qaytaradi. Referal konkursida 'Referal soni' ustuniga son, RANDOM
+    qaytaradi. Referal konkursida 'Ball' ustuniga son, RANDOM
     konkursida esa '-' yoziladi - LEKIN jadval tartibi (ustunlar) ikkalasida
     ham AYNAN BIR XIL bo'ladi."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Ishtirokchilar"
 
-    headers = ["№", "Ism-familiya", "Username", "Telegram ID", "Referal soni"]
+    headers = ["№", "Ism-familiya", "Username", "Telegram ID", "Ball"]
     ws.append(headers)
     for cell in ws[1]:
         cell.font = Font(name="Arial", bold=True)
