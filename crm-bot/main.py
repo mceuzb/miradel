@@ -9,8 +9,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import get_config
 from bot.database.engine import async_session, init_db
 from bot.handlers import (
-    admin, broadcast_lead, card_order, channel_membership, common, public, start, student, teacher,
+    admin, broadcast_lead, channel_membership, common, public, start, student, teacher,
 )
+# card_order olib tashlandi - bu funksiyadan voz kechilgan edi
 from bot.middlewares.access_control import AccessControlMiddleware
 from bot.middlewares.db_session import DbSessionMiddleware
 from bot.middlewares.subscription_check import SubscriptionCheckMiddleware
@@ -46,7 +47,6 @@ async def main() -> None:
 
     dp.include_router(start.router)
     dp.include_router(public.router)
-    dp.include_router(card_order.router)
     dp.include_router(broadcast_lead.router)
     dp.include_router(common.router)
     dp.include_router(admin.router)
@@ -57,8 +57,11 @@ async def main() -> None:
     logger.info("Bot ishga tushmoqda...")
 
     # Alpino web-server - botning O'ZI bilan bir xil jarayonda, alohida
-    # Railway xizmati OCHMASDAN ishga tushadi (bitta port, bitta xizmat)
-    await run_webapp(config.port)
+    # Railway xizmati OCHMASDAN ishga tushadi (bitta port, bitta xizmat).
+    # MUHIM: background task sifatida - `await` qilinmaydi, aks holda
+    # server abadiy ishlab turgani uchun pastdagi polling hech qachon
+    # boshlanmay qolardi.
+    asyncio.create_task(run_webapp(config.port))
 
     await bot.delete_webhook(drop_pending_updates=True)
     # allowed_updates aniq ko'rsatiladi - shunda Telegram "chat_member" (kanalni
