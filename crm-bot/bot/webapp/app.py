@@ -14,8 +14,8 @@ from sqlalchemy import select
 from bot.config import get_config
 from bot.database.engine import async_session
 from bot.database.models import (
-    AlpinoMarketItem, AlpinoMarketOrder, AlpinoOrderStatus, AlpinoPointsHistory,
-    AlpinoPointsStatus, User, UserRole, UserStatus,
+    AlpinoCategoryLimit, AlpinoFunnelEvent, AlpinoMarketItem, AlpinoMarketOrder,
+    AlpinoOrderStatus, AlpinoPointsHistory, AlpinoPointsStatus, User, UserRole, UserStatus,
 )
 from bot.services import alpino_service
 from bot.services.alpino_access import alpino_access_allowed
@@ -176,6 +176,39 @@ async def alpino_history(request: web.Request) -> web.Response:
     return web.json_response({"ok": True, "data": data})
 
 
+async def alpino_referral(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    from bot.database.models import AlpinoReferral, AlpinoReferralStatus
+    from sqlalchemy import func as sa_func
+
+    config = get_config()
+    link = f"https://t.me/{config.bot_username}?start=alpino_{user.id}" if config.bot_username else None
+
+    referred_count = await session.scalar(
+        select(sa_func.count(AlpinoReferral.id)).where(AlpinoReferral.referrer_id == user.id)
+    ) or 0
+    paid_count = await session.scalar(
+        select(sa_func.count(AlpinoReferral.id)).where(
+            AlpinoReferral.referrer_id == user.id, AlpinoReferral.status == AlpinoReferralStatus.PAID,
+        )
+    ) or 0
+    total_points = await session.scalar(
+        select(sa_func.coalesce(sa_func.sum(AlpinoPointsHistory.amount), 0)).where(
+            AlpinoPointsHistory.user_id == user.id,
+            AlpinoPointsHistory.category.in_(["referral_kelish", "referral_tolov"]),
+            AlpinoPointsHistory.status == AlpinoPointsStatus.APPROVED,
+        )
+    ) or 0
+
+    return web.json_response({
+        "ok": True,
+        "data": {
+            "link": link, "referred_count": referred_count,
+            "paid_count": paid_count, "total_points": int(total_points),
+        },
+    })
+
+
 # ---------------------------------------------------------------------------
 # Admin endpoint'lari
 # ---------------------------------------------------------------------------
@@ -304,6 +337,76 @@ async def admin_order_fulfil(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+# Frontenddagi "Chegara" panelida ko'rsatiladigan toifalar - agar bazada
+# hali sozlanmagan bo'lsa, shu standart qiymatlar ko'rsatiladi.
+DEFAULT_CATEGORY_LIMITS = {
+    "vazifa": 3, "topshiriq": 5, "imtihon": 15, "dars_faolligi": 10,
+}
+CATEGORY_LABELS = {
+    "vazifa": "Vazifa", "topshiriq": "Topshiriq",
+    "imtihon": "Imtihon", "dars_faolligi": "Dars faolligi g'olibi",
+}
+
+
+async def admin_limits(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_admin(user)) is not None:
+        return err
+    rows = await session.scalars(select(AlpinoCategoryLimit))
+    saved = {r.category: r.max_points for r in rows.all()}
+    data = [
+        {"category": cat, "label": CATEGORY_LABELS[cat], "max_points": saved.get(cat, default)}
+        for cat, default in DEFAULT_CATEGORY_LIMITS.items()
+    ]
+    return web.json_response({"ok": True, "data": data})
+
+
+async def admin_limits_update(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_admin(user)) is not None:
+        return err
+    body = await request.json()  # {"vazifa": 3, "topshiriq": 5, ...}
+    for category, value in body.items():
+        if category not in DEFAULT_CATEGORY_LIMITS:
+            continue
+        try:
+            value_int = int(value)
+        except (TypeError, ValueError):
+            continue
+        row = await session.scalar(select(AlpinoCategoryLimit).where(AlpinoCategoryLimit.category == category))
+        if row is None:
+            session.add(AlpinoCategoryLimit(category=category, max_points=value_int, set_by_admin_id=user.id))
+        else:
+            row.max_points = value_int
+            row.set_by_admin_id = user.id
+    await session.commit()
+    return web.json_response({"ok": True})
+
+
+async def admin_alerts(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_admin(user)) is not None:
+        return err
+    # TODO: haqiqiy anomaliya aniqlash mantig'i (masalan bitta o'qituvchining
+    # o'rtacha bergan bali guruh o'rtachasidan sezilarli farq qilishi) -
+    # bu keyingi bosqichda alohida qo'shiladi. Hozircha bo'sh ro'yxat.
+    return web.json_response({"ok": True, "data": []})
+
+
+async def admin_kpi(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_admin(user)) is not None:
+        return err
+    from sqlalchemy import func as sa_func
+    blocked = await session.scalar(
+        select(sa_func.count(AlpinoFunnelEvent.id)).where(AlpinoFunnelEvent.event == "blocked_unregistered")
+    ) or 0
+    enrolled = await session.scalar(
+        select(sa_func.count(AlpinoFunnelEvent.id)).where(AlpinoFunnelEvent.event == "enrolled")
+    ) or 0
+    return web.json_response({"ok": True, "data": {"blocked_unregistered": blocked, "enrolled": enrolled}})
+
+
 # ---------------------------------------------------------------------------
 # App yaratish / ishga tushirish
 # ---------------------------------------------------------------------------
@@ -319,6 +422,7 @@ def create_app() -> web.Application:
     app.router.add_get("/alpino/leaderboard", alpino_leaderboard)
     app.router.add_get("/alpino/pending", alpino_pending)
     app.router.add_get("/alpino/history", alpino_history)
+    app.router.add_get("/alpino/referral", alpino_referral)
 
     app.router.add_get("/alpino/admin/approvals", admin_approvals)
     app.router.add_post("/alpino/admin/approvals/{id}", admin_approval_action)
@@ -327,6 +431,10 @@ def create_app() -> web.Application:
     app.router.add_delete("/alpino/admin/market/{id}", admin_market_delete)
     app.router.add_get("/alpino/admin/orders", admin_orders)
     app.router.add_post("/alpino/admin/orders/{id}/fulfil", admin_order_fulfil)
+    app.router.add_get("/alpino/admin/limits", admin_limits)
+    app.router.add_post("/alpino/admin/limits", admin_limits_update)
+    app.router.add_get("/alpino/admin/alerts", admin_alerts)
+    app.router.add_get("/alpino/admin/kpi", admin_kpi)
 
     return app
 
