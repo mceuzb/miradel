@@ -8,11 +8,14 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import get_config
 from bot.database.engine import async_session, init_db
-from bot.handlers import admin, broadcast_lead, channel_membership, common, public, start, student, teacher
+from bot.handlers import (
+    admin, broadcast_lead, card_order, channel_membership, common, public, start, student, teacher,
+)
 from bot.middlewares.access_control import AccessControlMiddleware
 from bot.middlewares.db_session import DbSessionMiddleware
 from bot.middlewares.subscription_check import SubscriptionCheckMiddleware
 from bot.services.module_service import ensure_module_defaults
+from bot.webapp.app import run_webapp
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -43,6 +46,7 @@ async def main() -> None:
 
     dp.include_router(start.router)
     dp.include_router(public.router)
+    dp.include_router(card_order.router)
     dp.include_router(broadcast_lead.router)
     dp.include_router(common.router)
     dp.include_router(admin.router)
@@ -51,6 +55,11 @@ async def main() -> None:
     dp.include_router(channel_membership.router)
 
     logger.info("Bot ishga tushmoqda...")
+
+    # Alpino web-server - botning O'ZI bilan bir xil jarayonda, alohida
+    # Railway xizmati OCHMASDAN ishga tushadi (bitta port, bitta xizmat)
+    await run_webapp(config.port)
+
     await bot.delete_webhook(drop_pending_updates=True)
     # allowed_updates aniq ko'rsatiladi - shunda Telegram "chat_member" (kanalni
     # tark etish) hodisalarini ham yuborishiga kafolat beriladi
