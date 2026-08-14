@@ -5,6 +5,15 @@ from bot.config import get_config
 from bot.database.models import UserRole
 from bot.services.alpino_access import alpino_access_allowed
 
+# MUHIM: Telegram rasman hujjatlashtirgan xatti-harakat - agar Mini App
+# ReplyKeyboardButton (pastki klaviatura) orqali ochilsa, initData HAR DOIM
+# BO'SH keladi (https://core.telegram.org/bots/webapps#webappinitdata:
+# "It is empty if the Mini App was launched from a keyboard button").
+# Shuning uchun "⛰️ Alpino" endi oddiy MATN tugmasi - uni bosganda handler
+# alohida xabar orqali INLINE web_app tugmasini yuboradi (bot/handlers/common.py,
+# alpino_open_webapp), faqat o'sha yerda initData to'g'ri keladi.
+ALPINO_BUTTON_TEXT = "⛰️ Alpino"
+
 
 async def _alpino_row(session: AsyncSession, role: UserRole) -> list[KeyboardButton]:
     """Alpino - alohida, mustaqil mini-app.
@@ -17,7 +26,8 @@ async def _alpino_row(session: AsyncSession, role: UserRole) -> list[KeyboardBut
         return []
     if not await alpino_access_allowed(session, role):
         return []
-    return [KeyboardButton(text="⛰️ Alpino", web_app=WebAppInfo(url=url))]
+    # DIQQAT: bu yerda web_app=... QASDAN ishlatilmaydi - sababi yuqorida.
+    return [KeyboardButton(text=ALPINO_BUTTON_TEXT)]
 
 
 def contact_request_kb() -> ReplyKeyboardMarkup:
