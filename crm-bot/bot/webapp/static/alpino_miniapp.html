@@ -1245,12 +1245,15 @@ async function init(){
       showError("Bu ilova sizga mo'ljallanmagan", "Ball qo'yish uchun botdagi buyruqdan foydalaning.");
     }
   } catch(e) {
+    // ===== VAQTINCHA DEBUG (muammo topilgach olib tashlanadi) =====
+    const debugInfo = `initData uzunligi: ${INIT_DATA.length} | tg mavjud: ${!!tg} | tg.initData: "${(tg && tg.initData) || '(bosh)'}"`;
+    console.log('ALPINO DEBUG:', debugInfo);
     if(e.code === 'not_registered'){
       showError("Ro'yxatdan o'tmagansiz", "Alpino faqat ro'yxatdan o'tgan o'quvchilar uchun.");
     } else if(e.code === 'module_disabled'){
       showError("Hozircha faol emas", "Alpino hali ishga tushirilmagan, birozdan so'ng qaytadan urinib ko'ring.");
     } else {
-      showError("Xatolik", e.message || "Noma'lum xatolik yuz berdi");
+      showError("Xatolik: " + (e.message || "Noma'lum"), debugInfo);
     }
   }
 }
