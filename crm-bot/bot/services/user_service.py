@@ -49,6 +49,13 @@ async def approve_user(session: AsyncSession, user_id: int, role: UserRole) -> U
     user.role = role
     await session.commit()
     await session.refresh(user)
+
+    # Alpino TZ v3, 3.3-band: referral orqali kelgan bo'lsa, referrer'ga +10
+    # (modul o'chiq bo'lsa ham xavfsiz - jadval yozuvlari saqlanadi, faqat
+    # foydalanuvchiga ko'rinmaydi, chunki module_guard tugmani yashiradi)
+    from bot.services.alpino_service import award_referral_came
+    await award_referral_came(session, referred_user=user)
+
     return user
 
 
