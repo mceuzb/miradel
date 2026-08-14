@@ -40,6 +40,9 @@ async def alpino_auth_middleware(request: web.Request, handler):
         return await handler(request)
 
     init_data = request.headers.get("X-Telegram-Init-Data", "")
+    # ===== VAQTINCHA DEBUG (muammo topilgach olib tashlanadi) =====
+    logger.info(f"ALPINO DEBUG: initData uzunligi={len(init_data)}, boshi={init_data[:80]!r}")
+
     config = get_config()
     parsed = verify_init_data(init_data, config.bot_token)
     if parsed is None:
