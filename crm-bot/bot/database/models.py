@@ -388,6 +388,7 @@ class AlpinoPointsHistory(Base):
     status: Mapped[AlpinoPointsStatus] = mapped_column(Enum(AlpinoPointsStatus), default=AlpinoPointsStatus.PENDING)
     teacher_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)  # o'qituvchi qoldirgan izoh
     reject_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -395,12 +396,29 @@ class AlpinoPointsHistory(Base):
 
 class AlpinoReferral(Base):
     __tablename__ = "alpino_referrals"
+    __table_args__ = (UniqueConstraint("referred_id", name="uq_alpino_referred_once"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     referred_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     status: Mapped[AlpinoReferralStatus] = mapped_column(Enum(AlpinoReferralStatus), default=AlpinoReferralStatus.CAME)
+    # "2026-08" ko'rinishida - bir oyda +300 bonusni ikki marta bermaslik uchun
+    paid_bonus_month: Mapped[str | None] = mapped_column(String(7), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AlpinoMarketItem(Base):
+    """Admin boshqaradigan market katalogi - nom, narx, son, rasm."""
+    __tablename__ = "alpino_market_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cost_points: Mapped[int] = mapped_column(Integer)
+    condition_text: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+    tier: Mapped[str] = mapped_column(String(32), default="silver")  # premium / gold / silver
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class AlpinoMarketOrder(Base):
@@ -408,10 +426,12 @@ class AlpinoMarketOrder(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    item_name: Mapped[str] = mapped_column(String(255))
-    cost_points: Mapped[int] = mapped_column(Integer)
+    item_id: Mapped[int | None] = mapped_column(ForeignKey("alpino_market_items.id"), nullable=True)
+    item_name: Mapped[str] = mapped_column(String(255))    # tarixiy - buyurtma vaqtidagi nom
+    cost_points: Mapped[int] = mapped_column(Integer)       # tarixiy - buyurtma vaqtidagi narx
     status: Mapped[AlpinoOrderStatus] = mapped_column(Enum(AlpinoOrderStatus), default=AlpinoOrderStatus.PENDING)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class AlpinoCategoryLimit(Base):
