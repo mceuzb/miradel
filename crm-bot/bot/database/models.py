@@ -413,7 +413,10 @@ class AlpinoMarketItem(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
-    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Text: rasm base64 (data:image/...) sifatida saqlanadi, bu 500 belgidan
+    # ancha uzun bo'lishi mumkin (String(500) StringDataRightTruncationError
+    # xatosiga sabab bo'lgan edi).
+    image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     cost_points: Mapped[int] = mapped_column(Integer)
     condition_text: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stock: Mapped[int] = mapped_column(Integer, default=0)
