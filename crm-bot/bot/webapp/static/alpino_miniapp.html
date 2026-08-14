@@ -734,6 +734,13 @@
 // =============================================
 // ===== ALPINO - API BILAN ISHLASH =====
 // =============================================
+// ===== VAQTINCHA DIAGNOSTIKA: Telegram bridge chindan ham ma'lumot
+// yuboryaptimi (URL hash/query'da) yoki tg.initData SDK darajasida
+// yo'qolyaptimi - shuni ajratish uchun. Muammo topilgach olib tashlanadi.
+const RAW_HASH = window.location.hash || "(hash yo'q)";
+const RAW_SEARCH = window.location.search || "(query yo'q)";
+const HAS_TG_WEBAPP_DATA_IN_URL = /tgWebAppData/i.test(window.location.href);
+
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 const INIT_DATA = tg ? tg.initData : "";
@@ -1246,7 +1253,7 @@ async function init(){
     }
   } catch(e) {
     // ===== VAQTINCHA DEBUG (muammo topilgach olib tashlanadi) =====
-    const debugInfo = `initData uzunligi: ${INIT_DATA.length} | tg mavjud: ${!!tg} | tg.initData: "${(tg && tg.initData) || '(bosh)'}"`;
+    const debugInfo = `initData uzunligi: ${INIT_DATA.length} | tg mavjud: ${!!tg} | tg.initData: "${(tg && tg.initData) || '(bosh)'}" | tg.platform: "${(tg && tg.platform) || '?'}" | tg.version: "${(tg && tg.version) || '?'}" | URL hash: "${RAW_HASH}" | URL query: "${RAW_SEARCH}" | tgWebAppData URL'da bormi: ${HAS_TG_WEBAPP_DATA_IN_URL}`;
     console.log('ALPINO DEBUG:', debugInfo);
     if(e.code === 'not_registered'){
       showError("Ro'yxatdan o'tmagansiz", "Alpino faqat ro'yxatdan o'tgan o'quvchilar uchun.");
