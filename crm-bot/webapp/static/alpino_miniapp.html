@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpino — Miradel Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20232B;
+    --ink-dim:#525761;
+    --ink-mute:#8A8F9B;
+    --glass-1:rgba(255,255,255,.52);
+    --glass-2:rgba(255,255,255,.22);
+    --glass-border:rgba(255,255,255,.55);
+    --glass-shadow:0 8px 28px rgba(31,38,80,.14), inset 0 1px 0 rgba(255,255,255,.65);
+    --accent-1:#5B5FEF;
+    --accent-2:#8B7CF6;
+    --accent-glass-1:rgba(91,95,239,.55);
+    --accent-glass-2:rgba(139,124,246,.30);
+    --gold:#C9862E;
+    --gold-glass-1:rgba(224,158,58,.55);
+    --gold-glass-2:rgba(255,199,120,.28);
+    --silver:#9CA3AF;
+    --silver-glass-1:rgba(156,163,175,.35);
+    --silver-glass-2:rgba(156,163,175,.15);
+    --premium:#8B5CF6;
+    --premium-glass-1:rgba(139,92,246,.35);
+    --premium-glass-2:rgba(139,92,246,.15);
+    --ok:#1F9D63;
+    --ok-glass:rgba(45,178,120,.45);
+    --bad:#D14F3E;
+    --bad-glass:rgba(214,88,68,.45);
+    --radius-s:14px;
+    --radius-m:20px;
+    --radius-l:28px;
+    --radius-pill:999px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    background:#EEF0F6;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:-10%;
+    background:
+      radial-gradient(38% 30% at 12% 8%, rgba(255,201,150,.55), transparent 60%),
+      radial-gradient(45% 35% at 88% 12%, rgba(140,170,255,.45), transparent 60%),
+      radial-gradient(50% 40% at 20% 92%, rgba(150,235,220,.40), transparent 60%),
+      radial-gradient(45% 40% at 90% 88%, rgba(180,150,255,.45), transparent 60%),
+      linear-gradient(135deg, #F6EFE7 0%, #E9EEF8 55%, #E7F3F0 100%);
+    filter:blur(50px);
+    z-index:0;
+    pointer-events:none;
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    background:linear-gradient(115deg, rgba(255,255,255,.35) 0%, transparent 30%, transparent 70%, rgba(255,255,255,.18) 100%);
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .device{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    position:relative;
+    z-index:1;
+    overflow-x:hidden;
+    padding-bottom:118px;
+  }
+
+  .glass{
+    background:linear-gradient(155deg, var(--glass-1), var(--glass-2));
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow);
+  }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 18px 8px 18px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand img{ width:34px; height:34px; display:block; border-radius:8px; object-fit:cover; filter:drop-shadow(0 2px 4px rgba(20,20,30,.15)); }
+  .brand-text .word{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px;
+    letter-spacing:0.2px; line-height:1.1; color:var(--ink);
+  }
+  .brand-text .sub{ font-size:9.5px; color:var(--ink-mute); font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+  .role-switch{
+    display:flex; padding:3px; gap:2px; border-radius:var(--radius-pill);
+    background:linear-gradient(155deg, var(--glass-1), var(--glass-2));
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:0 4px 14px rgba(31,38,80,.10), inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  .role-switch button{
+    border:none; background:none; color:var(--ink-dim); font-family:'Inter';
+    font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill);
+    cursor:pointer; transition:all .25s ease;
+  }
+  .role-switch button.active{
+    background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2));
+    backdrop-filter:blur(10px);
+    color:#fff;
+    box-shadow:0 3px 10px rgba(91,95,239,.35), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+
+  /* ===== NEW ALTIMETER HERO ===== */
+  .altimeter-wrap{
+    margin:8px 18px 6px 18px;
+    background:linear-gradient(160deg, rgba(120,110,255,.50), rgba(150,190,255,.30));
+    backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:var(--radius-l);
+    padding:18px 18px 16px 18px;
+    position:relative;
+    overflow:hidden;
+    color:#fff;
+    box-shadow:0 16px 34px -10px rgba(80,70,200,.35), inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  .altimeter-wrap::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 88% -10%, rgba(255,255,255,0.28), transparent 55%),
+      radial-gradient(circle at 0% 115%, rgba(255,255,255,0.14), transparent 50%);
+    pointer-events:none;
+  }
+  .alt-top-row{ display:flex; justify-content:space-between; align-items:flex-start; position:relative; }
+  .alt-name{ font-family:'Space Grotesk'; font-size:17px; font-weight:600; margin-top:3px; }
+  .alt-rank{
+    background:rgba(255,255,255,.22); color:#fff; font-size:12px; font-weight:700;
+    padding:5px 12px; border-radius:var(--radius-pill); white-space:nowrap; backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.35);
+  }
+  .alt-points{
+    font-family:'Space Mono', monospace; font-size:48px; font-weight:700;
+    margin-top:6px; line-height:1; letter-spacing:-1px;
+  }
+
+  /* ===== RANKING CHART ===== */
+  .rank-chart-wrap{
+    margin-top:14px;
+    padding:12px 6px 6px 6px;
+    background:rgba(255,255,255,.10);
+    border-radius:var(--radius-m);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .rank-chart-title{
+    font-size:9px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.5);
+    margin-bottom:8px; padding-left:4px;
+  }
+  .rank-bar-wrap{
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .rank-bar-row{
+    display:flex; align-items:center; gap:6px;
+  }
+  .rank-bar-label{
+    font-size:9px; font-weight:600; color:rgba(255,255,255,.7);
+    width:30px; text-align:right; flex-shrink:0;
+    font-family:'Space Mono',monospace;
+  }
+  .rank-bar-track{
+    flex:1; height:18px; background:rgba(255,255,255,.12); border-radius:var(--radius-pill);
+    overflow:hidden; position:relative;
+  }
+  .rank-bar-fill{
+    height:100%; border-radius:var(--radius-pill);
+    background:linear-gradient(90deg, rgba(255,255,255,.3), rgba(255,255,255,.6));
+    transition:width 1s ease;
+    min-width:4px;
+  }
+  .rank-bar-fill.me{
+    background:linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    box-shadow:0 0 12px rgba(91,95,239,.4);
+  }
+  .rank-bar-fill.top1{
+    background:linear-gradient(90deg, var(--gold), #FFD700);
+    box-shadow:0 0 12px rgba(201,134,46,.3);
+  }
+  .rank-bar-fill.top2{
+    background:linear-gradient(90deg, #C0C0C0, #E8E8E8);
+  }
+  .rank-bar-fill.top3{
+    background:linear-gradient(90deg, #CD7F32, #E8A87C);
+  }
+  .rank-bar-pts{
+    font-size:9px; font-weight:700; color:rgba(255,255,255,.8);
+    width:38px; text-align:left; flex-shrink:0;
+    font-family:'Space Mono',monospace;
+  }
+
+  .section{ padding:18px 18px 6px 18px; position:relative; z-index:1; }
+  .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+  .section-title{ font-family:'Space Grotesk'; font-size:15px; font-weight:600; }
+  .section-sub{ font-size:11px; color:var(--ink-mute); }
+
+  .panel{ display:none; animation:fadein .35s ease; }
+  .panel.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .card{
+    background:linear-gradient(155deg, var(--glass-1), var(--glass-2));
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow);
+    border-radius:var(--radius-m);
+    padding:14px; margin-bottom:10px;
+  }
+
+  /* ===== MARKET ===== */
+  .market-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .market-grid.premium{ grid-template-columns:1fr; }
+  
+  .market-item{
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border-radius:var(--radius-m);
+    padding:14px; display:flex; flex-direction:column; gap:6px;
+    transition:all .3s ease;
+  }
+  .market-item:hover{ transform:translateY(-2px); }
+  .market-item img{ width:100%; height:80px; object-fit:cover; border-radius:var(--radius-s); background:#f0f0f0; }
+  .market-item .badge{
+    font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    padding:2px 8px; border-radius:var(--radius-pill); display:inline-block; width:fit-content;
+  }
+  .market-name{ font-size:12.5px; font-weight:600; line-height:1.3; }
+  .market-cost{ font-family:'Space Mono'; font-size:15px; font-weight:700; }
+  .market-cond{ font-size:9.5px; color:var(--ink-mute); }
+  .market-stock{ font-size:9.5px; color:var(--ink-dim); }
+  .buy-btn{
+    margin-top:2px; width:100%; padding:9px; border:1px solid rgba(255,255,255,.5); border-radius:var(--radius-pill);
+    font-size:11.5px; font-weight:700; cursor:pointer;
+    background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2));
+    backdrop-filter:blur(10px);
+    color:#fff;
+    box-shadow:0 6px 16px rgba(91,95,239,.30), inset 0 1px 0 rgba(255,255,255,.5);
+    transition:.15s;
+  }
+  .buy-btn:disabled{
+    background:rgba(255,255,255,.30); color:var(--ink-mute); cursor:not-allowed;
+    box-shadow:none; border-color:rgba(255,255,255,.4);
+  }
+
+  .market-item.premium{
+    background:linear-gradient(155deg, var(--premium-glass-1), var(--premium-glass-2));
+    border:2px solid var(--premium);
+    box-shadow:0 8px 28px rgba(139,92,246,.25), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .market-item.premium .badge{ background:var(--premium); color:#fff; }
+  .market-item.premium .market-cost{ color:var(--premium); }
+
+  .market-item.gold{
+    background:linear-gradient(155deg, var(--gold-glass-1), var(--gold-glass-2));
+    border:2px solid var(--gold);
+    box-shadow:0 8px 28px rgba(201,134,46,.20), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .market-item.gold .badge{ background:var(--gold); color:#fff; }
+  .market-item.gold .market-cost{ color:var(--gold); }
+
+  .market-item.silver{
+    background:linear-gradient(155deg, var(--silver-glass-1), var(--silver-glass-2));
+    border:2px solid var(--silver);
+    box-shadow:0 8px 28px rgba(156,163,175,.15), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .market-item.silver .badge{ background:var(--silver); color:#fff; }
+  .market-item.silver .market-cost{ color:var(--ink-dim); }
+
+  .market-section-label{
+    font-family:'Space Grotesk'; font-size:12px; font-weight:600;
+    margin:12px 0 8px 0; display:flex; align-items:center; gap:8px;
+  }
+  .market-section-label .line{ flex:1; height:1px; background:rgba(255,255,255,.3); }
+
+  .admin-market-item{
+    background:linear-gradient(155deg, var(--glass-1), var(--glass-2));
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow);
+    border-radius:var(--radius-m);
+    padding:13px; margin-bottom:10px;
+  }
+  .admin-market-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .admin-market-row .info{ flex:1; min-width:120px; }
+  .admin-market-row .info .name{ font-weight:600; font-size:13px; }
+  .admin-market-row .info .cond{ font-size:10px; color:var(--ink-mute); }
+  .admin-market-actions{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .admin-market-actions button{ 
+    border:1px solid rgba(255,255,255,.5); padding:5px 10px; border-radius:var(--radius-pill);
+    font-size:10.5px; font-weight:600; cursor:pointer; backdrop-filter:blur(8px);
+    transition:all .2s;
+  }
+  .admin-market-actions button:hover{ transform:scale(1.05); }
+  .btn-edit-price{ background:linear-gradient(150deg, var(--gold-glass-1), var(--gold-glass-2)); color:#7A5A1A; }
+  .btn-edit-stock{ background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2)); color:#fff; }
+  .btn-upload{ background:linear-gradient(150deg, var(--ok-glass), rgba(45,178,120,.18)); color:#0E5C36; }
+  .btn-delete{ background:linear-gradient(150deg, var(--bad-glass), rgba(214,88,68,.18)); color:#7A231A; }
+  .admin-market-img{ width:50px; height:50px; object-fit:cover; border-radius:var(--radius-s); background:#f0f0f0; }
+  .upload-input{ display:none; }
+  .admin-tier-select{
+    padding:4px 8px; border-radius:var(--radius-pill); border:1px solid rgba(255,255,255,.5);
+    background:rgba(255,255,255,.3); font-size:10px; font-weight:600; color:var(--ink);
+    backdrop-filter:blur(8px);
+  }
+  .admin-tier-select option{ background:#fff; color:var(--ink); }
+
+  .lb-row{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.4); }
+  .lb-row:last-child{ border-bottom:none; }
+  .lb-rank{ font-family:'Space Mono'; font-size:13px; width:22px; color:var(--ink-mute); font-weight:700; }
+  .lb-rank.top{ color:var(--gold); }
+  .lb-name{ flex:1; font-size:13px; font-weight:600; }
+  .lb-pts{ font-family:'Space Mono'; font-size:13px; color:var(--accent-1); font-weight:700; }
+
+  .ref-link-box{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.35); backdrop-filter:blur(10px);
+    border:1px dashed rgba(255,255,255,.6); border-radius:var(--radius-s); padding:10px 12px;
+    font-family:'Space Mono'; font-size:11.5px; color:var(--ink-dim); overflow:hidden;
+  }
+  .ref-link-box span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .copy-btn{
+    border:1px solid rgba(255,255,255,.5);
+    background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2));
+    backdrop-filter:blur(8px);
+    color:#fff; font-size:11px; font-weight:700;
+    padding:7px 11px; border-radius:var(--radius-pill); cursor:pointer; flex:none;
+  }
+  .stat-pair{ display:flex; gap:10px; margin-top:10px; }
+  .stat-box{
+    flex:1; background:rgba(255,255,255,.32); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.5);
+    border-radius:var(--radius-s); padding:11px; text-align:center;
+  }
+  .stat-num{ font-family:'Space Mono'; font-size:18px; font-weight:700; color:var(--accent-1); }
+  .stat-lbl{ font-size:9.5px; color:var(--ink-mute); margin-top:2px; }
+
+  .pending-item{ padding:11px 0; border-bottom:1px solid rgba(255,255,255,.4); }
+  .pending-item:last-child{ border-bottom:none; }
+  .pending-top{ display:flex; justify-content:space-between; align-items:center; }
+  .pending-cat{ font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-mute); font-weight:700; }
+  .pending-pts{ font-family:'Space Mono'; font-weight:700; color:var(--ink-dim); font-size:13px; }
+  .pending-desc{ font-size:12.5px; margin-top:4px; color:var(--ink-dim); }
+  .badge-pending{
+    font-size:9.5px; color:#8A5A12; background:rgba(255,199,120,.45); backdrop-filter:blur(6px);
+    padding:2px 7px; border-radius:8px; border:1px solid rgba(255,255,255,.5);
+  }
+
+  .kpi-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi-card{
+    background:linear-gradient(155deg, var(--glass-1), var(--glass-2));
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);
+    border-radius:var(--radius-m); padding:13px;
+  }
+  .kpi-num{ font-family:'Space Mono'; font-size:22px; font-weight:700; }
+  .kpi-lbl{ font-size:10.5px; color:var(--ink-mute); margin-top:4px; line-height:1.4; }
+
+  .approval-card{
+    background:linear-gradient(155deg, var(--glass-1), var(--glass-2));
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);
+    border-radius:var(--radius-m); padding:13px; margin-bottom:10px;
+  }
+  .approval-head{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .approval-student{ font-size:13.5px; font-weight:700; }
+  .approval-meta{ font-size:11px; color:var(--ink-mute); margin-top:2px; }
+  .approval-pts{ font-family:'Space Mono'; font-size:17px; font-weight:700; color:var(--gold); }
+  .approval-actions{ display:flex; gap:8px; margin-top:11px; }
+  .act-btn{ flex:1; border:1px solid rgba(255,255,255,.5); padding:9px; border-radius:var(--radius-pill); font-size:12px; font-weight:700; cursor:pointer; backdrop-filter:blur(8px); }
+  .act-approve{ background:linear-gradient(150deg, var(--ok-glass), rgba(45,178,120,.18)); color:#0E5C36; }
+  .act-reject{ background:linear-gradient(150deg, var(--bad-glass), rgba(214,88,68,.18)); color:#7A231A; }
+
+  .limit-row{ display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.4); }
+  .limit-row:last-child{ border-bottom:none; }
+  .limit-name{ font-size:13px; font-weight:600; }
+  .limit-input{
+    width:60px; background:rgba(255,255,255,.4); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.55); color:var(--ink);
+    font-family:'Space Mono'; font-size:13px; text-align:center; border-radius:10px; padding:7px 4px;
+  }
+
+  .alert-card{
+    background:linear-gradient(150deg, var(--bad-glass), rgba(214,88,68,.14));
+    backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid rgba(255,255,255,.5); border-radius:var(--radius-m); padding:12px; margin-bottom:10px;
+    box-shadow:0 8px 24px rgba(200,80,60,.15), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .alert-title{ font-size:12.5px; font-weight:700; color:#8A2E20; display:flex; align-items:center; gap:6px; }
+  .alert-body{ font-size:12px; color:var(--ink-dim); margin-top:5px; line-height:1.5; }
+
+  .order-row{ display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.4); }
+  .order-row:last-child{ border-bottom:none; }
+  .order-name{ font-size:12.5px; font-weight:600; }
+  .order-sub{ font-size:10.5px; color:var(--ink-mute); margin-top:2px; }
+  .fulfil-btn{
+    border:1px solid rgba(255,255,255,.5);
+    background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2));
+    backdrop-filter:blur(8px);
+    color:#fff; font-size:11px; font-weight:700; padding:7px 11px; border-radius:var(--radius-pill); cursor:pointer;
+  }
+
+  .bottom-nav{
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    width:calc(100% - 32px); max-width:398px;
+    background:linear-gradient(155deg, rgba(255,255,255,.60), rgba(255,255,255,.28));
+    backdrop-filter:blur(26px) saturate(180%);
+    -webkit-backdrop-filter:blur(26px) saturate(180%);
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:var(--radius-l);
+    display:flex; justify-content:space-around; align-items:center;
+    padding:10px 8px calc(10px + env(safe-area-inset-bottom, 0px)) 8px;
+    box-shadow:0 16px 40px -8px rgba(31,38,80,.28), inset 0 1px 0 rgba(255,255,255,.7);
+    z-index:40;
+  }
+  .nav-btn{
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    background:none; border:none; cursor:pointer; flex:1;
+  }
+  .nav-icon{
+    width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-mute);
+    background:rgba(255,255,255,.25);
+    border:1px solid transparent;
+    transition:all .28s cubic-bezier(.34,1.4,.64,1);
+    position:relative;
+  }
+  .nav-icon svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .nav-btn.active .nav-icon{
+    color:#fff;
+    background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2));
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.55);
+    transform:translateY(-9px) scale(1.1);
+    box-shadow:0 12px 22px -6px rgba(91,95,239,.5), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .nav-label{ font-size:9.5px; font-weight:600; color:var(--ink-mute); transition:.25s; }
+  .nav-btn.active .nav-label{ color:var(--accent-1); font-weight:700; transform:translateY(-9px); }
+
+  .toast{
+    position:fixed; bottom:104px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:rgba(30,32,40,.72); backdrop-filter:blur(14px);
+    color:#fff;
+    padding:11px 18px; border-radius:var(--radius-pill); font-size:12.5px; font-weight:600;
+    opacity:0; pointer-events:none; transition:all .3s ease; z-index:50;
+    max-width:88%; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .add-product-form{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .add-product-form .row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .add-product-form input, .add-product-form select{ 
+    flex:1; min-width:80px; padding:8px 10px; border-radius:var(--radius-s);
+    border:1px solid rgba(255,255,255,.55); background:rgba(255,255,255,.4); backdrop-filter:blur(8px);
+    font-family:'Inter'; font-size:12px; color:var(--ink);
+  }
+  .add-product-form input::placeholder{ color:var(--ink-mute); }
+  .add-product-form .upload-area{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .add-product-form .upload-area .preview-img{ width:50px; height:50px; object-fit:cover; border-radius:var(--radius-s); background:#f0f0f0; }
+  .add-product-form .upload-area .upload-label{ 
+    padding:6px 12px; border:1px solid rgba(255,255,255,.5); border-radius:var(--radius-pill);
+    font-size:11px; font-weight:600; cursor:pointer;
+    background:linear-gradient(150deg, var(--ok-glass), rgba(45,178,120,.18)); color:#0E5C36;
+  }
+  .add-btn{
+    padding:8px 16px; border:1px solid rgba(255,255,255,.5); border-radius:var(--radius-pill);
+    font-size:12px; font-weight:700; cursor:pointer;
+    background:linear-gradient(150deg, var(--accent-glass-1), var(--accent-glass-2));
+    backdrop-filter:blur(10px); color:#fff;
+  }
+  .save-market-btn{
+    width:100%; padding:10px; border:1px solid rgba(255,255,255,.5); border-radius:var(--radius-pill);
+    font-size:13px; font-weight:700; cursor:pointer;
+    background:linear-gradient(150deg, var(--ok-glass), rgba(45,178,120,.18)); color:#0E5C36;
+    margin-top:6px;
+  }
+</style>
+
+</head>
+<body>
+<div class="device">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="https://picsum.photos/seed/alpino/34/34" alt="Miradel Academy">
+      <div class="brand-text">
+        <div class="word">Alpino</div>
+        <div class="sub">Miradel Academy</div>
+      </div>
+    </div>
+    <div class="role-switch">
+      <button id="btnStudent" class="active" onclick="setRole('student')">Talaba</button>
+      <button id="btnAdmin" onclick="setRole('admin')">Admin</button>
+    </div>
+  </div>
+
+  <!-- ============ STUDENT VIEW ============ -->
+  <div id="view-student">
+
+    <!-- ===== NEW HERO ===== -->
+    <div class="altimeter-wrap">
+      <div class="alt-top-row">
+        <div>
+          <div class="alt-name">Kamola Yusupova</div>
+        </div>
+        <div class="alt-rank">4-o'rin</div>
+      </div>
+      <div class="alt-points" id="pointsDisplay">730</div>
+
+      <!-- ===== RANKING CHART ===== -->
+      <div class="rank-chart-wrap" id="rankChartWrap">
+        <div class="rank-chart-title">🏆 Reyting grafigi</div>
+        <div class="rank-bar-wrap" id="rankChart"></div>
+      </div>
+    </div>
+
+    <div class="section">
+
+      <div class="panel active" id="s-profile">
+        <div class="section-head"><div class="section-title">Hisob ma'lumotlari</div></div>
+        <div class="card">
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Ism</span></div>
+            <div class="pending-desc">Kamola Yusupova</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">O'quvchi ID</span></div>
+            <div class="pending-desc">MCE-2481</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Kurslar</span></div>
+            <div class="pending-desc">Excel · Word</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Qo'shilgan sana</span></div>
+            <div class="pending-desc">14-may, 2026</div>
+          </div>
+        </div>
+        <button class="buy-btn" style="margin-top:2px; background:var(--surface-alt); color:var(--ink);" onclick="toast('Sozlamalar tez orada')">⚙️ Sozlamalar</button>
+      </div>
+
+      <div class="panel" id="s-market">
+        <div class="section-head"><div class="section-title">Alpino Market</div><div class="section-sub">Balans: <b id="marketBalance">730</b></div></div>
+        <div id="marketContainer"></div>
+      </div>
+
+      <div class="panel" id="s-leaderboard">
+        <div class="section-head"><div class="section-title">TOP-10 · shu oy</div></div>
+        <div class="card" id="lbList"></div>
+      </div>
+
+      <div class="panel" id="s-earn">
+        <div class="section-head"><div class="section-title">Ball manbalari</div></div>
+        <div class="card">
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Vazifa</span><span class="pending-pts">+3 gacha</span></div>
+            <div class="pending-desc">O'qituvchi taklif qiladi, admin tasdiqlaydi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Topshiriq</span><span class="pending-pts">+5 gacha</span></div>
+            <div class="pending-desc">O'qituvchi taklif qiladi, admin tasdiqlaydi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Imtihon</span><span class="pending-pts">+15 gacha</span></div>
+            <div class="pending-desc">O'qituvchi taklif qiladi, admin tasdiqlaydi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Imtihon 1-2-3-o'rin</span><span class="pending-pts">+50 / +15 / +8</span></div>
+            <div class="pending-desc">Oyiga bir marta, admin belgilaydi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Dars faolligi g'olibi</span><span class="pending-pts">+10</span></div>
+            <div class="pending-desc">Har dars uchun 1 nafar, admin belgilaydi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Referral · kelish</span><span class="pending-pts">+10</span></div>
+            <div class="pending-desc">Do'stingiz testga kelganda</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Referral · to'lov</span><span class="pending-pts">+500</span></div>
+            <div class="pending-desc">Do'stingiz 1-oylik to'lovni amalga oshirganda</div>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:6px;"><div class="section-title">Do'stni taklif qilish</div></div>
+        <div class="card">
+          <div class="ref-link-box"><span>t.me/alpino_bot?start=ref_KY4471</span><button class="copy-btn" onclick="copyRef()">Nusxa</button></div>
+          <div class="stat-pair">
+            <div class="stat-box"><div class="stat-num">3</div><div class="stat-lbl">Taklif qilingan</div></div>
+            <div class="stat-box"><div class="stat-num">1</div><div class="stat-lbl">To'lov qilgan</div></div>
+            <div class="stat-box"><div class="stat-num">+510</div><div class="stat-lbl">Jami ball</div></div>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:6px;"><div class="section-title">Kutilayotgan ballar</div><div class="section-sub">3 ta</div></div>
+        <div class="card">
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Vazifa · Excel kursi</span><span class="badge-pending">Kutilmoqda</span></div>
+            <div class="pending-desc">SUMIF funksiyasi bo'yicha vazifa · +3 ball taklif qilindi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Imtihon · Word kursi</span><span class="badge-pending">Kutilmoqda</span></div>
+            <div class="pending-desc">Oylik imtihon natijasi · +15 ball taklif qilindi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Topshiriq</span><span class="badge-pending">Kutilmoqda</span></div>
+            <div class="pending-desc">Amaliy loyiha topshirig'i · +5 ball taklif qilindi</div>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:6px;"><div class="section-title">So'nggi tarix</div></div>
+        <div class="card">
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Referral · to'lov</span><span class="pending-pts" style="color:var(--ok)">+500</span></div>
+            <div class="pending-desc">Aziz Karimov to'lovni amalga oshirdi</div>
+          </div>
+          <div class="pending-item">
+            <div class="pending-top"><span class="pending-cat">Dars faolligi g'olibi</span><span class="pending-pts" style="color:var(--ok)">+10</span></div>
+            <div class="pending-desc">Excel darsida eng faol o'quvchi</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-nav" id="navStudent">
+      <button class="nav-btn active" data-panel="s-profile" onclick="setTab(this,'student')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.13-7 7-7s7 3.1 7 7"/></svg></div><div class="nav-label">Profil</div>
+      </button>
+      <button class="nav-btn" data-panel="s-market" onclick="setTab(this,'student')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="nav-label">Market</div>
+      </button>
+      <button class="nav-btn" data-panel="s-leaderboard" onclick="setTab(this,'student')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 20V11"/><path d="M10 20V4"/><path d="M16 20V13.5"/><path d="M3.5 20h17"/></svg></div><div class="nav-label">Reyting</div>
+      </button>
+      <button class="nav-btn" data-panel="s-earn" onclick="setTab(this,'student')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 5.3 5.8.6-4.3 3.9 1.2 5.7-5.2-2.9-5.2 2.9 1.2-5.7-4.3-3.9 5.8-.6L12 3.5z"/></svg></div><div class="nav-label">Ball ishlash</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN VIEW ============ -->
+  <div id="view-admin" style="display:none;">
+
+    <div class="section" style="padding-top:10px;">
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-num" style="color:var(--gold)">142</div><div class="kpi-lbl">User Alpino'ni ko'rdi</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:var(--accent-1)">38</div><div class="kpi-lbl">Shundan kursga yozildi (27%)</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+
+      <div class="panel active" id="a-approve">
+        <div class="section-head"><div class="section-title">Kutilayotgan takliflar</div><div class="section-sub" id="approveCount">4 ta</div></div>
+        <div id="approveList"></div>
+      </div>
+
+      <div class="panel" id="a-market">
+        <div class="section-head"><div class="section-title">Market boshqaruvi</div><div class="section-sub" id="adminMarketCount">5 ta mahsulot</div></div>
+        <div id="adminMarketList"></div>
+        <div class="card">
+          <div class="section-title" style="font-size:13px; margin-bottom:8px;">Yangi mahsulot qo'shish</div>
+          <div class="add-product-form">
+            <div class="row">
+              <input type="text" id="newProductName" placeholder="Nomi">
+              <input type="number" id="newProductCost" placeholder="Narx">
+            </div>
+            <div class="row">
+              <input type="text" id="newProductCond" placeholder="Shart (ixtiyoriy)">
+              <input type="number" id="newProductStock" placeholder="Miqdor">
+              <select id="newProductTier" class="admin-tier-select">
+                <option value="premium">🌟 Premium</option>
+                <option value="gold" selected>🥇 Gold</option>
+                <option value="silver">🥈 Silver</option>
+              </select>
+            </div>
+            <div class="row upload-area">
+              <img id="newProductPreview" class="preview-img" src="https://picsum.photos/seed/default/80/80" alt="Rasm">
+              <label class="upload-label" for="newProductUpload">📤 Rasm yuklash</label>
+              <input type="file" id="newProductUpload" class="upload-input" accept="image/*" onchange="previewNewProductImage(event)">
+              <span style="font-size:10px; color:var(--ink-mute);">JPG, PNG, GIF</span>
+            </div>
+            <button class="add-btn" onclick="addProduct()">➕ Qo'shish</button>
+          </div>
+        </div>
+        <button class="save-market-btn" onclick="saveMarketChanges()">💾 O'zgarishlarni saqlash</button>
+      </div>
+
+      <div class="panel" id="a-limits">
+        <div class="section-head"><div class="section-title">Maksimal ball chegaralari</div></div>
+        <div class="card">
+          <div class="limit-row"><span class="limit-name">Vazifa</span><input class="limit-input" type="number" value="3"></div>
+          <div class="limit-row"><span class="limit-name">Topshiriq</span><input class="limit-input" type="number" value="5"></div>
+          <div class="limit-row"><span class="limit-name">Imtihon</span><input class="limit-input" type="number" value="15"></div>
+          <div class="limit-row"><span class="limit-name">Dars faolligi g'olibi</span><input class="limit-input" type="number" value="10"></div>
+        </div>
+        <button class="buy-btn" style="margin-top:2px;" onclick="toast('Chegaralar saqlandi')">Saqlash</button>
+      </div>
+
+      <div class="panel" id="a-alerts">
+        <div class="section-head"><div class="section-title">Anomaliya signali</div></div>
+        <div class="alert-card">
+          <div class="alert-title">⚠️ Bobur Rashidov (Word kursi)</div>
+          <div class="alert-body">O'rtacha bergan bali guruh o'rtachasidan <b>68%</b> yuqori (chegara: 50%). Ko'rib chiqish tavsiya etiladi.</div>
+        </div>
+        <div class="card" style="color:var(--ink-mute); font-size:12.5px; text-align:center; padding:22px;">Boshqa faol signal yo'q</div>
+      </div>
+
+      <div class="panel" id="a-orders">
+        <div class="section-head"><div class="section-title">Market zayavkalari</div></div>
+        <div class="card" id="ordersList"></div>
+      </div>
+
+    </div>
+
+    <div class="bottom-nav" id="navAdmin">
+      <button class="nav-btn active" data-panel="a-approve" onclick="setTab(this,'admin')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.6 2.6L16.2 9"/></svg></div><div class="nav-label">Tasdiqlash</div>
+      </button>
+      <button class="nav-btn" data-panel="a-market" onclick="setTab(this,'admin')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="nav-label">Market</div>
+      </button>
+      <button class="nav-btn" data-panel="a-limits" onclick="setTab(this,'admin')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 7h9"/><circle cx="16" cy="7" r="1.8"/><path d="M12 12h8"/><circle cx="9" cy="12" r="1.8"/><path d="M4 17h9"/><circle cx="16" cy="17" r="1.8"/></svg></div><div class="nav-label">Chegara</div>
+      </button>
+      <button class="nav-btn" data-panel="a-alerts" onclick="setTab(this,'admin')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 4a5 5 0 0 0-5 5v3l-1.6 3.2h13.2L17 12V9a5 5 0 0 0-5-5z"/><path d="M10.2 19a2 2 0 0 0 3.6 0"/></svg></div><div class="nav-label">Signal</div>
+      </button>
+      <button class="nav-btn" data-panel="a-orders" onclick="setTab(this,'admin')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3.3l7.5 4.2v8.9L12 20.7l-7.5-4.3V7.5L12 3.3z"/><path d="M4.5 7.5L12 11.8l7.5-4.3"/><path d="M12 11.8v8.9"/></svg></div><div class="nav-label">Buyurtma</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  points: 730,
+  market: [
+    {name:"🌟 VIP Alpino to'plami", image:"https://picsum.photos/seed/vip/80/80", cost:500, cond:"Premium mahsulot", stock:3, tier:"premium"},
+    {name:"Eksklyuziv qo'llanma (PDF)", image:"https://picsum.photos/seed/book/80/80", cost:100, cond:null, stock:15, tier:"gold"},
+    {name:"Telegram Premium (1 oy)", image:"https://picsum.photos/seed/premium/80/80", cost:150, cond:null, stock:8, tier:"gold"},
+    {name:"Ruchka + Bloknot", image:"https://picsum.photos/seed/stationery/80/80", cost:200, cond:null, stock:20, tier:"silver"},
+    {name:"Termos", image:"https://picsum.photos/seed/thermos/80/80", cost:600, cond:"1+ referral to'lovi", stock:5, tier:"silver"},
+  ],
+  leaderboard: [
+    {name:"Sardor Aliyev", pts:1420},
+    {name:"Dilnoza Rahimova", pts:1180},
+    {name:"Jasur Toshev", pts:940},
+    {name:"Kamola Yusupova", pts:730, me:true},
+    {name:"Otabek Nurov", pts:610},
+    {name:"Madina Xolova", pts:540},
+  ],
+  approvals: [
+    {student:"Kamola Yusupova", teacher:"M. Tosheva", cat:"Vazifa · Excel", pts:3},
+    {student:"Jasur Toshev", teacher:"M. Tosheva", cat:"Topshiriq · Excel", pts:5},
+    {student:"Otabek Nurov", teacher:"B. Rashidov", cat:"Imtihon · Word", pts:15},
+    {student:"Madina Xolova", teacher:"B. Rashidov", cat:"Vazifa · Word", pts:3},
+  ],
+  orders: [
+    {student:"Sardor Aliyev", item:"Alpino Hudi", pts:1100},
+    {student:"Dilnoza Rahimova", item:"Termos", pts:600},
+  ]
+};
+
+let newProductImageData = null;
+
+// ===== TOAST =====
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ===== ROLE / TAB =====
+function setRole(role){
+  document.getElementById('btnStudent').classList.toggle('active', role==='student');
+  document.getElementById('btnAdmin').classList.toggle('active', role==='admin');
+  document.getElementById('view-student').style.display = role==='student' ? 'block' : 'none';
+  document.getElementById('view-admin').style.display = role==='admin' ? 'block' : 'none';
+  if(role==='admin') renderAdminMarket();
+}
+
+function setTab(el, scope){
+  const nav = el.parentElement;
+  nav.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const panelId = el.dataset.panel;
+  const container = scope==='student' ? document.getElementById('view-student') : document.getElementById('view-admin');
+  container.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+}
+
+function copyRef(){ toast('Havola nusxalandi'); }
+
+// ===== TIER LABELS =====
+const tierLabels = {
+  premium: '🌟 Premium',
+  gold: '🥇 Gold',
+  silver: '🥈 Silver'
+};
+
+// ===== RANKING CHART =====
+function renderRankChart(){
+  const container = document.getElementById('rankChart');
+  if(!container) return;
+  container.innerHTML = '';
+  
+  const sorted = [...state.leaderboard].sort((a,b) => b.pts - a.pts);
+  const maxPts = sorted[0]?.pts || 1;
+  const top3 = sorted.slice(0, 3);
+  const top3Names = top3.map(p => p.name);
+  
+  // Show top 6 for better view
+  const display = sorted.slice(0, 6);
+  
+  display.forEach((row, i) => {
+    const pct = Math.max((row.pts / maxPts) * 100, 4);
+    const isMe = row.me || false;
+    const rank = i + 1;
+    
+    let fillClass = '';
+    if(isMe) fillClass = 'me';
+    else if(rank === 1) fillClass = 'top1';
+    else if(rank === 2) fillClass = 'top2';
+    else if(rank === 3) fillClass = 'top3';
+    
+    const div = document.createElement('div');
+    div.className = 'rank-bar-row';
+    div.innerHTML = `
+      <div class="rank-bar-label">#${rank}</div>
+      <div class="rank-bar-track">
+        <div class="rank-bar-fill ${fillClass}" style="width:${pct}%;"></div>
+      </div>
+      <div class="rank-bar-pts">${row.pts}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ===== STUDENT MARKET =====
+function renderMarket(){
+  const container = document.getElementById('marketContainer');
+  if(!container) return;
+  container.innerHTML = '';
+  
+  const premiumItems = state.market.filter(item => item.tier === 'premium');
+  const goldItems = state.market.filter(item => item.tier === 'gold');
+  const silverItems = state.market.filter(item => item.tier === 'silver');
+  
+  if(premiumItems.length > 0){
+    const label = document.createElement('div');
+    label.className = 'market-section-label';
+    label.innerHTML = `<span>🌟 Premium</span><span class="line"></span>`;
+    container.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'market-grid premium';
+    premiumItems.forEach((item) => {
+      const realIndex = state.market.indexOf(item);
+      grid.appendChild(createMarketItem(item, realIndex, 'premium'));
+    });
+    container.appendChild(grid);
+  }
+  
+  if(goldItems.length > 0){
+    const label = document.createElement('div');
+    label.className = 'market-section-label';
+    label.innerHTML = `<span>🥇 Gold</span><span class="line"></span>`;
+    container.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'market-grid';
+    goldItems.forEach((item) => {
+      const realIndex = state.market.indexOf(item);
+      grid.appendChild(createMarketItem(item, realIndex, 'gold'));
+    });
+    container.appendChild(grid);
+  }
+  
+  if(silverItems.length > 0){
+    const label = document.createElement('div');
+    label.className = 'market-section-label';
+    label.innerHTML = `<span>🥈 Silver</span><span class="line"></span>`;
+    container.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'market-grid';
+    silverItems.forEach((item) => {
+      const realIndex = state.market.indexOf(item);
+      grid.appendChild(createMarketItem(item, realIndex, 'silver'));
+    });
+    container.appendChild(grid);
+  }
+  
+  if(state.market.length === 0){
+    container.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); padding:30px;">Marketda hozircha mahsulot yo'q</div>`;
+  }
+}
+
+function createMarketItem(item, index, tier){
+  const affordable = state.points >= item.cost && item.stock > 0;
+  const div = document.createElement('div');
+  div.className = `market-item ${tier}`;
+  const tierBadge = tierLabels[tier] || '';
+  div.innerHTML = `
+    <div class="badge">${tierBadge}</div>
+    <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/error/80/80'">
+    <div class="market-name">${item.name}</div>
+    <div class="market-cost">${item.cost} ball</div>
+    ${item.cond ? `<div class="market-cond">${item.cond}</div>` : ''}
+    <div class="market-stock">📦 ${item.stock} dona</div>
+    <button class="buy-btn" ${affordable ? '' : 'disabled'} onclick="buyItem(${index})">${affordable ? 'Sotib olish' : (item.stock<=0 ? 'Tugagan' : 'Yetarli emas')}</button>
+  `;
+  return div;
+}
+
+function buyItem(i){
+  const item = state.market[i];
+  if(state.points < item.cost || item.stock <= 0) return;
+  state.points -= item.cost;
+  item.stock -= 1;
+  document.getElementById('pointsDisplay').textContent = state.points;
+  document.getElementById('marketBalance').textContent = state.points;
+  toast(`"${item.name}" uchun zayavka yuborildi (${item.stock} dona qoldi)`);
+  renderMarket();
+  renderAdminMarket();
+  renderRankChart();
+  saveToLocalStorage();
+}
+
+// ===== LEADERBOARD =====
+function renderLeaderboard(){
+  const list = document.getElementById('lbList');
+  if(!list) return;
+  list.innerHTML = '';
+  state.leaderboard.forEach((row, i)=>{
+    const div = document.createElement('div');
+    div.className = 'lb-row';
+    div.innerHTML = `
+      <div class="lb-rank ${i<3?'top':''}">${i+1}</div>
+      <div class="lb-name" style="${row.me ? 'color:var(--accent-1)' : ''}">${row.name}${row.me ? ' (siz)' : ''}</div>
+      <div class="lb-pts">${row.pts}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ===== APPROVALS =====
+function renderApprovals(){
+  const list = document.getElementById('approveList');
+  if(!list) return;
+  list.innerHTML = '';
+  document.getElementById('approveCount').textContent = state.approvals.length + ' ta';
+  if(state.approvals.length === 0){
+    list.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:22px;">Kutilayotgan taklif yo'q</div>`;
+    return;
+  }
+  state.approvals.forEach((a, i)=>{
+    const div = document.createElement('div');
+    div.className = 'approval-card';
+    div.innerHTML = `
+      <div class="approval-head">
+        <div><div class="approval-student">${a.student}</div><div class="approval-meta">${a.teacher} taklif qildi · ${a.cat}</div></div>
+        <div class="approval-pts">+${a.pts}</div>
+      </div>
+      <div class="approval-actions">
+        <button class="act-btn act-approve" onclick="decide(${i}, true)">Tasdiqlash</button>
+        <button class="act-btn act-reject" onclick="decide(${i}, false)">Rad etish</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function decide(i, approve){
+  const a = state.approvals[i];
+  if(approve){
+    toast(`${a.student} uchun +${a.pts} ball tasdiqlandi`);
+  } else {
+    const reason = prompt('Rad etish sababini kiriting:');
+    if(reason === null) return;
+    toast(`Rad etildi, o'quvchiga sabab yuborildi`);
+  }
+  state.approvals.splice(i,1);
+  renderApprovals();
+}
+
+// ===== ORDERS =====
+function renderOrders(){
+  const list = document.getElementById('ordersList');
+  if(!list) return;
+  list.innerHTML = '';
+  if(state.orders.length === 0){
+    list.innerHTML = `<div style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:12px;">Faol zayavka yo'q</div>`;
+    return;
+  }
+  state.orders.forEach((o,i)=>{
+    const div = document.createElement('div');
+    div.className = 'order-row';
+    div.innerHTML = `
+      <div><div class="order-name">${o.item}</div><div class="order-sub">${o.student} · ${o.pts} ball</div></div>
+      <button class="fulfil-btn" onclick="fulfilOrder(${i})">Topshirildi</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function fulfilOrder(i){
+  toast(`${state.orders[i].student} ga sovg'a topshirildi deb belgilandi`);
+  state.orders.splice(i,1);
+  renderOrders();
+}
+
+// =============================================
+// ===== ADMIN MARKET MANAGEMENT =====
+// =============================================
+
+function renderAdminMarket(){
+  const list = document.getElementById('adminMarketList');
+  if(!list) return;
+  list.innerHTML = '';
+  const count = document.getElementById('adminMarketCount');
+  if(count) count.textContent = state.market.length + ' ta mahsulot';
+  
+  state.market.forEach((item, i)=>{
+    const div = document.createElement('div');
+    div.className = 'admin-market-item';
+    const tier = item.tier || 'silver';
+    div.innerHTML = `
+      <div class="admin-market-row">
+        <img src="${item.image}" class="admin-market-img" onerror="this.src='https://picsum.photos/seed/error/50/50'">
+        <div class="info">
+          <div class="name">${item.name}</div>
+          <div class="cond">${tierLabels[tier] || tier} · ${item.cond || 'Shartsiz'} · 📦 ${item.stock} dona · 💰 ${item.cost} ball</div>
+        </div>
+        <div class="admin-market-actions">
+          <select class="admin-tier-select" onchange="changeTier(${i}, this.value)">
+            <option value="premium" ${tier==='premium'?'selected':''}>🌟 Premium</option>
+            <option value="gold" ${tier==='gold'?'selected':''}>🥇 Gold</option>
+            <option value="silver" ${tier==='silver'?'selected':''}>🥈 Silver</option>
+          </select>
+          <button class="btn-edit-price" onclick="editPrice(${i})">💰</button>
+          <button class="btn-edit-stock" onclick="editStock(${i})">📦</button>
+          <button class="btn-upload" onclick="document.getElementById('upload_${i}').click()">📤</button>
+          <button class="btn-delete" onclick="deleteProduct(${i})">🗑️</button>
+          <input type="file" id="upload_${i}" class="upload-input" accept="image/*" onchange="uploadProductImage(${i}, event)">
+        </div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function changeTier(index, value){
+  state.market[index].tier = value;
+  toast(`"${state.market[index].name}" darajasi ${tierLabels[value]} ga o'zgartirildi`);
+  renderAdminMarket();
+  renderMarket();
+  saveToLocalStorage();
+}
+
+function uploadProductImage(index, event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    state.market[index].image = e.target.result;
+    toast(`"${state.market[index].name}" rasmi yangilandi!`);
+    renderAdminMarket();
+    renderMarket();
+    saveToLocalStorage();
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewNewProductImage(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    newProductImageData = e.target.result;
+    document.getElementById('newProductPreview').src = newProductImageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+function editPrice(index){
+  const item = state.market[index];
+  const newPrice = prompt(`"${item.name}" uchun yangi narxni kiriting:`, item.cost);
+  if(newPrice !== null && !isNaN(newPrice) && Number(newPrice) >= 0){
+    item.cost = Number(newPrice);
+    toast(`"${item.name}" narxi ${item.cost} ballga o'zgartirildi`);
+    renderAdminMarket();
+    renderMarket();
+    saveToLocalStorage();
+  }
+}
+
+function editStock(index){
+  const item = state.market[index];
+  const newStock = prompt(`"${item.name}" uchun yangi miqdorni kiriting:`, item.stock);
+  if(newStock !== null && !isNaN(newStock) && Number(newStock) >= 0){
+    item.stock = Number(newStock);
+    toast(`"${item.name}" miqdori ${item.stock} donaga o'zgartirildi`);
+    renderAdminMarket();
+    renderMarket();
+    saveToLocalStorage();
+  }
+}
+
+function deleteProduct(index){
+  const item = state.market[index];
+  if(confirm(`"${item.name}" ni marketdan o'chirmoqchimisiz?`)){
+    state.market.splice(index, 1);
+    toast(`"${item.name}" o'chirildi`);
+    renderAdminMarket();
+    renderMarket();
+    saveToLocalStorage();
+  }
+}
+
+function addProduct(){
+  const name = document.getElementById('newProductName').value.trim();
+  const cost = Number(document.getElementById('newProductCost').value) || 0;
+  const cond = document.getElementById('newProductCond').value.trim() || null;
+  const stock = Number(document.getElementById('newProductStock').value) || 0;
+  const tier = document.getElementById('newProductTier').value;
+  const image = newProductImageData || 'https://picsum.photos/seed/'+Date.now()+'/80/80';
+  
+  if(!name){
+    toast('Mahsulot nomini kiriting!');
+    return;
+  }
+  if(cost <= 0){
+    toast('Narxni kiriting (0 dan katta)!');
+    return;
+  }
+  
+  state.market.push({name, image, cost, cond, stock, tier});
+  toast(`"${name}" qo'shildi! (${tierLabels[tier]})`);
+  
+  document.getElementById('newProductName').value = '';
+  document.getElementById('newProductCost').value = '';
+  document.getElementById('newProductCond').value = '';
+  document.getElementById('newProductStock').value = '';
+  document.getElementById('newProductPreview').src = 'https://picsum.photos/seed/default/80/80';
+  document.getElementById('newProductUpload').value = '';
+  newProductImageData = null;
+  
+  renderAdminMarket();
+  renderMarket();
+  saveToLocalStorage();
+}
+
+function saveMarketChanges(){
+  saveToLocalStorage();
+  toast('Barcha o\'zgarishlar saqlandi! (localStorage)');
+}
+
+function saveToLocalStorage(){
+  try {
+    localStorage.setItem('alpino_market', JSON.stringify(state.market));
+    localStorage.setItem('alpino_points', JSON.stringify(state.points));
+  } catch(e) {
+    console.log('localStorage saqlashda xatolik:', e);
+  }
+}
+
+function loadFromLocalStorage(){
+  try {
+    const savedMarket = localStorage.getItem('alpino_market');
+    const savedPoints = localStorage.getItem('alpino_points');
+    if(savedMarket) {
+      const parsed = JSON.parse(savedMarket);
+      if(parsed && parsed.length > 0) {
+        state.market = parsed;
+      }
+    }
+    if(savedPoints) {
+      const pts = JSON.parse(savedPoints);
+      if(typeof pts === 'number') {
+        state.points = pts;
+        document.getElementById('pointsDisplay').textContent = state.points;
+        document.getElementById('marketBalance').textContent = state.points;
+      }
+    }
+  } catch(e) {
+    console.log('localStorage yuklashda xatolik:', e);
+  }
+}
+
+// ===== INIT =====
+loadFromLocalStorage();
+renderRankChart();
+renderMarket();
+renderLeaderboard();
+renderApprovals();
+renderOrders();
+</script>
+</body>
+</html>
