@@ -1,4 +1,15 @@
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, WebAppInfo
+
+from bot.config import get_config
+
+
+def _alpino_row() -> list[KeyboardButton]:
+    """Alpino - alohida, mustaqil mini-app. Faqat domen sozlangan bo'lsagina
+    (Railway'da 'Generate Domain' bosilgandan keyin) ko'rinadi."""
+    url = get_config().get_alpino_url()
+    if not url:
+        return []
+    return [KeyboardButton(text="⛰️ Alpino", web_app=WebAppInfo(url=url))]
 
 
 def contact_request_kb() -> ReplyKeyboardMarkup:
@@ -14,49 +25,53 @@ def remove_kb() -> ReplyKeyboardRemove:
 
 
 def guest_menu_kb() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="📅 Kurslar jadvali")],
-            [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
-            [KeyboardButton(text="🔗 Do'stlarni taklif qilish")],
-            [KeyboardButton(text="🎓 Kursga yozilish")],
-        ],
-        resize_keyboard=True,
-    )
+    rows = [
+        [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="📅 Kurslar jadvali")],
+        [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
+        [KeyboardButton(text="🔗 Do'stlarni taklif qilish")],
+        [KeyboardButton(text="🎓 Kursga yozilish")],
+    ]
+    alpino = _alpino_row()
+    if alpino:
+        rows.append(alpino)
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
 
 def admin_menu_kb() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🆕 Yangi so'rovlar"), KeyboardButton(text="⚙️ Modullar")],
-            [KeyboardButton(text="👥 Guruhlar"), KeyboardButton(text="📊 Hisobotlar")],
-            [KeyboardButton(text="📢 Majburiy kanallar"), KeyboardButton(text="🎛 Konkurslarni boshqarish")],
-            [KeyboardButton(text="📢 Ommaviy xabar")],
-        ],
-        resize_keyboard=True,
-    )
+    rows = [
+        [KeyboardButton(text="🆕 Yangi so'rovlar"), KeyboardButton(text="⚙️ Modullar")],
+        [KeyboardButton(text="👥 Guruhlar"), KeyboardButton(text="📊 Hisobotlar")],
+        [KeyboardButton(text="📢 Majburiy kanallar"), KeyboardButton(text="🎛 Konkurslarni boshqarish")],
+        [KeyboardButton(text="📢 Ommaviy xabar"), KeyboardButton(text="🎫 Referal kartalar")],
+    ]
+    alpino = _alpino_row()
+    if alpino:
+        rows.append(alpino)
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
 
 def teacher_menu_kb() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="👥 Guruhlarim"), KeyboardButton(text="✅ Davomat")],
-            [KeyboardButton(text="📝 Vazifa berish"), KeyboardButton(text="📥 Topshiriqlar")],
-        ],
-        resize_keyboard=True,
-    )
+    rows = [
+        [KeyboardButton(text="👥 Guruhlarim"), KeyboardButton(text="✅ Davomat")],
+        [KeyboardButton(text="📝 Vazifa berish"), KeyboardButton(text="📥 Topshiriqlar")],
+    ]
+    alpino = _alpino_row()
+    if alpino:
+        rows.append(alpino)
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
 
 def student_menu_kb() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="👤 Kabinetim"), KeyboardButton(text="📝 Vazifalarim")],
-            [KeyboardButton(text="📅 Dars jadvali"), KeyboardButton(text="📈 Davomatim")],
-            [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
-            [KeyboardButton(text="🔗 Do'stlarni taklif qilish")],
-        ],
-        resize_keyboard=True,
-    )
+    rows = [
+        [KeyboardButton(text="👤 Kabinetim"), KeyboardButton(text="📝 Vazifalarim")],
+        [KeyboardButton(text="📅 Dars jadvali"), KeyboardButton(text="📈 Davomatim")],
+        [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
+        [KeyboardButton(text="🔗 Do'stlarni taklif qilish")],
+    ]
+    alpino = _alpino_row()
+    if alpino:
+        rows.append(alpino)
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
 
 def menu_for_role(role) -> ReplyKeyboardMarkup:
@@ -80,5 +95,5 @@ PUBLIC_TEXTS = {
 # tugmalar (callback_data). AccessControlMiddleware shu ro'yxatga qarab
 # tekshiradi - matn tugmalaridan farqli o'laroq, callbacklar avval bu yerda
 # alohida tasdiqlanmasa, bloklanib qolar edi.
-PUBLIC_CALLBACK_DATA = {"check_subscription", "get_referral_link"}
+PUBLIC_CALLBACK_DATA = {"check_subscription", "get_referral_link", "referral_card_info", "referral_card_order"}
 PUBLIC_CALLBACK_PREFIXES = ("join_random:", "broadcast_interest:")
