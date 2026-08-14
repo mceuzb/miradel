@@ -35,6 +35,11 @@ _MISSING_COLUMN_PATCHES: list[str] = [
     "REFERENCES alpino_market_items(id)",
     "ALTER TABLE alpino_market_orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ",
     "ALTER TABLE alpino_referrals ADD COLUMN IF NOT EXISTS paid_bonus_month VARCHAR(7)",
+    # market_items.image_url avval VARCHAR(500) edi - miniapp rasmni base64
+    # (data:image/...) shaklida yuboradi, bu odatda 500 belgidan ancha uzun
+    # bo'ladi va StringDataRightTruncationError berardi. TEXT ga o'tkazish
+    # xavfsiz va qayta ishga tushirilsa ham xato bermaydi.
+    "ALTER TABLE alpino_market_items ALTER COLUMN image_url TYPE TEXT",
 ]
 
 
