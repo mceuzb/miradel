@@ -13,6 +13,7 @@ MODULE_KEYS: dict[str, str] = {
     "task_module": "Vazifa va topshiriqlar",
     "rating_leaderboard": "Reyting/gamifikatsiya",
     "parent_panel": "Ota-ona paneli",
+    "alpino_module": "Alpino — ball, market va referral tizimi",
 }
 
 
