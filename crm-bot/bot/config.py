@@ -24,6 +24,8 @@ class Config:
     railway_public_domain: str | None = field(default_factory=lambda: os.getenv("RAILWAY_PUBLIC_DOMAIN"))
     # Agar domen boshqacha (custom domain) bo'lsa, buni qo'lda ham berish mumkin
     alpino_webapp_url: str | None = field(default_factory=lambda: os.getenv("ALPINO_WEBAPP_URL"))
+    # Referral havolasi (t.me/{username}?start=...) qurish uchun - @ belgisisiz
+    bot_username: str | None = field(default_factory=lambda: os.getenv("BOT_USERNAME"))
 
     def get_alpino_url(self) -> str | None:
         if self.alpino_webapp_url:
