@@ -31,6 +31,26 @@ STATIC_DIR = pathlib.Path(__file__).parent / "static"
 # ---------------------------------------------------------------------------
 
 @web.middleware
+async def alpino_error_middleware(request: web.Request, handler):
+    """VAQTINCHA DIAGNOSTIKA: kutilmagan (500) xatolarni ham JSON ko'rinishida
+    qaytaradi - aks holda aiohttp ularni oddiy matn sifatida qaytaradi va
+    frontend "Server javobi noto'g'ri" deb umumiy xato ko'rsatadi, haqiqiy
+    sabab yashiringan bo'ladi. Muammo topilgach bu middleware olib tashlanadi
+    (production'da xato tafsilotlarini foydalanuvchiga ko'rsatish yaxshi amaliyot
+    emas)."""
+    try:
+        return await handler(request)
+    except web.HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("ALPINO 500: %s %s", request.method, request.path)
+        return web.json_response(
+            {"ok": False, "error": "server_error", "message": f"{type(e).__name__}: {e}"},
+            status=500,
+        )
+
+
+@web.middleware
 async def alpino_auth_middleware(request: web.Request, handler):
     if not request.path.startswith("/alpino/") and request.path != "/alpino":
         return await handler(request)
@@ -415,7 +435,7 @@ async def admin_kpi(request: web.Request) -> web.Response:
 # ---------------------------------------------------------------------------
 
 def create_app() -> web.Application:
-    app = web.Application(middlewares=[alpino_auth_middleware])
+    app = web.Application(middlewares=[alpino_error_middleware, alpino_auth_middleware])
     app.router.add_get("/health", health_check)
     app.router.add_get("/alpino", serve_alpino)
 
