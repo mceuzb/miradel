@@ -512,24 +512,32 @@
         <div class="sub">Miradel Academy</div>
       </div>
     </div>
-    <div class="role-switch">
-      <button id="btnStudent" class="active" onclick="setRole('student')">Talaba</button>
-      <button id="btnAdmin" onclick="setRole('admin')">Admin</button>
+    <div class="brand-text" style="text-align:right;">
+      <div class="sub" id="topbarStatus"></div>
     </div>
   </div>
 
+  <!-- Yuklanmoqda / ruxsat yo'q ekrani -->
+  <div id="view-loading" style="padding:60px 20px; text-align:center; color:var(--ink-mute);">
+    Yuklanmoqda...
+  </div>
+  <div id="view-error" style="display:none; padding:60px 20px; text-align:center;">
+    <div style="font-size:15px; margin-bottom:8px;" id="errorTitle">Xatolik</div>
+    <div style="font-size:12.5px; color:var(--ink-mute);" id="errorText"></div>
+  </div>
+
   <!-- ============ STUDENT VIEW ============ -->
-  <div id="view-student">
+  <div id="view-student" style="display:none;">
 
     <!-- ===== NEW HERO ===== -->
     <div class="altimeter-wrap">
       <div class="alt-top-row">
         <div>
-          <div class="alt-name">Kamola Yusupova</div>
+          <div class="alt-name" id="heroName">—</div>
         </div>
-        <div class="alt-rank">4-o'rin</div>
+        <div class="alt-rank" id="heroRank">—</div>
       </div>
-      <div class="alt-points" id="pointsDisplay">730</div>
+      <div class="alt-points" id="pointsDisplay">0</div>
 
       <!-- ===== RANKING CHART ===== -->
       <div class="rank-chart-wrap" id="rankChartWrap">
@@ -545,26 +553,17 @@
         <div class="card">
           <div class="pending-item">
             <div class="pending-top"><span class="pending-cat">Ism</span></div>
-            <div class="pending-desc">Kamola Yusupova</div>
+            <div class="pending-desc" id="profileName">—</div>
           </div>
           <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">O'quvchi ID</span></div>
-            <div class="pending-desc">MCE-2481</div>
-          </div>
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Kurslar</span></div>
-            <div class="pending-desc">Excel · Word</div>
-          </div>
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Qo'shilgan sana</span></div>
-            <div class="pending-desc">14-may, 2026</div>
+            <div class="pending-top"><span class="pending-cat">Rol</span></div>
+            <div class="pending-desc" id="profileRole">—</div>
           </div>
         </div>
-        <button class="buy-btn" style="margin-top:2px; background:var(--surface-alt); color:var(--ink);" onclick="toast('Sozlamalar tez orada')">⚙️ Sozlamalar</button>
       </div>
 
       <div class="panel" id="s-market">
-        <div class="section-head"><div class="section-title">Alpino Market</div><div class="section-sub">Balans: <b id="marketBalance">730</b></div></div>
+        <div class="section-head"><div class="section-title">Alpino Market</div><div class="section-sub">Balans: <b id="marketBalance">0</b></div></div>
         <div id="marketContainer"></div>
       </div>
 
@@ -608,41 +607,19 @@
 
         <div class="section-head" style="margin-top:6px;"><div class="section-title">Do'stni taklif qilish</div></div>
         <div class="card">
-          <div class="ref-link-box"><span>t.me/alpino_bot?start=ref_KY4471</span><button class="copy-btn" onclick="copyRef()">Nusxa</button></div>
+          <div class="ref-link-box"><span id="refLinkText">yuklanmoqda...</span><button class="copy-btn" onclick="copyRef()">Nusxa</button></div>
           <div class="stat-pair">
-            <div class="stat-box"><div class="stat-num">3</div><div class="stat-lbl">Taklif qilingan</div></div>
-            <div class="stat-box"><div class="stat-num">1</div><div class="stat-lbl">To'lov qilgan</div></div>
-            <div class="stat-box"><div class="stat-num">+510</div><div class="stat-lbl">Jami ball</div></div>
+            <div class="stat-box"><div class="stat-num" id="refCountReferred">0</div><div class="stat-lbl">Taklif qilingan</div></div>
+            <div class="stat-box"><div class="stat-num" id="refCountPaid">0</div><div class="stat-lbl">To'lov qilgan</div></div>
+            <div class="stat-box"><div class="stat-num" id="refTotalPoints">+0</div><div class="stat-lbl">Jami ball</div></div>
           </div>
         </div>
 
-        <div class="section-head" style="margin-top:6px;"><div class="section-title">Kutilayotgan ballar</div><div class="section-sub">3 ta</div></div>
-        <div class="card">
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Vazifa · Excel kursi</span><span class="badge-pending">Kutilmoqda</span></div>
-            <div class="pending-desc">SUMIF funksiyasi bo'yicha vazifa · +3 ball taklif qilindi</div>
-          </div>
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Imtihon · Word kursi</span><span class="badge-pending">Kutilmoqda</span></div>
-            <div class="pending-desc">Oylik imtihon natijasi · +15 ball taklif qilindi</div>
-          </div>
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Topshiriq</span><span class="badge-pending">Kutilmoqda</span></div>
-            <div class="pending-desc">Amaliy loyiha topshirig'i · +5 ball taklif qilindi</div>
-          </div>
-        </div>
+        <div class="section-head" style="margin-top:6px;"><div class="section-title">Kutilayotgan ballar</div><div class="section-sub" id="pendingCount">0 ta</div></div>
+        <div class="card" id="pendingList"></div>
 
         <div class="section-head" style="margin-top:6px;"><div class="section-title">So'nggi tarix</div></div>
-        <div class="card">
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Referral · to'lov</span><span class="pending-pts" style="color:var(--ok)">+500</span></div>
-            <div class="pending-desc">Aziz Karimov to'lovni amalga oshirdi</div>
-          </div>
-          <div class="pending-item">
-            <div class="pending-top"><span class="pending-cat">Dars faolligi g'olibi</span><span class="pending-pts" style="color:var(--ok)">+10</span></div>
-            <div class="pending-desc">Excel darsida eng faol o'quvchi</div>
-          </div>
-        </div>
+        <div class="card" id="historyList"></div>
       </div>
 
     </div>
@@ -668,8 +645,8 @@
 
     <div class="section" style="padding-top:10px;">
       <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-num" style="color:var(--gold)">142</div><div class="kpi-lbl">User Alpino'ni ko'rdi</div></div>
-        <div class="kpi-card"><div class="kpi-num" style="color:var(--accent-1)">38</div><div class="kpi-lbl">Shundan kursga yozildi (27%)</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:var(--gold)" id="kpiBlocked">0</div><div class="kpi-lbl">Ro'yxatdan o'tmagan urinish</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:var(--accent-1)" id="kpiEnrolled">0</div><div class="kpi-lbl">Ro'yxatdan o'tganlar</div></div>
       </div>
     </div>
 
@@ -708,27 +685,18 @@
             <button class="add-btn" onclick="addProduct()">➕ Qo'shish</button>
           </div>
         </div>
-        <button class="save-market-btn" onclick="saveMarketChanges()">💾 O'zgarishlarni saqlash</button>
+        <div class="card" style="color:var(--ink-mute); font-size:11px; text-align:center; padding:10px;">O'zgarishlar avtomatik saqlanadi</div>
       </div>
 
       <div class="panel" id="a-limits">
         <div class="section-head"><div class="section-title">Maksimal ball chegaralari</div></div>
-        <div class="card">
-          <div class="limit-row"><span class="limit-name">Vazifa</span><input class="limit-input" type="number" value="3"></div>
-          <div class="limit-row"><span class="limit-name">Topshiriq</span><input class="limit-input" type="number" value="5"></div>
-          <div class="limit-row"><span class="limit-name">Imtihon</span><input class="limit-input" type="number" value="15"></div>
-          <div class="limit-row"><span class="limit-name">Dars faolligi g'olibi</span><input class="limit-input" type="number" value="10"></div>
-        </div>
-        <button class="buy-btn" style="margin-top:2px;" onclick="toast('Chegaralar saqlandi')">Saqlash</button>
+        <div class="card" id="limitsList"></div>
+        <button class="buy-btn" style="margin-top:2px;" onclick="saveLimits()">Saqlash</button>
       </div>
 
       <div class="panel" id="a-alerts">
         <div class="section-head"><div class="section-title">Anomaliya signali</div></div>
-        <div class="alert-card">
-          <div class="alert-title">⚠️ Bobur Rashidov (Word kursi)</div>
-          <div class="alert-body">O'rtacha bergan bali guruh o'rtachasidan <b>68%</b> yuqori (chegara: 50%). Ko'rib chiqish tavsiya etiladi.</div>
-        </div>
-        <div class="card" style="color:var(--ink-mute); font-size:12.5px; text-align:center; padding:22px;">Boshqa faol signal yo'q</div>
+        <div id="alertsList"></div>
       </div>
 
       <div class="panel" id="a-orders">
@@ -761,34 +729,46 @@
 </div>
 
 <script>
-// ===== STATE =====
+
+// =============================================
+// ===== ALPINO - API BILAN ISHLASH =====
+// =============================================
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
+const INIT_DATA = tg ? tg.initData : "";
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": INIT_DATA,
+      ...(options.headers || {}),
+    },
+  });
+  let body;
+  try { body = await res.json(); } catch (e) { body = { ok: false, message: "Server javobi noto'g'ri" }; }
+  if (!res.ok || !body.ok) {
+    const err = new Error(body.message || body.error || "Xatolik yuz berdi");
+    err.status = res.status;
+    err.code = body.error;
+    throw err;
+  }
+  return body.data;
+}
+
 const state = {
-  points: 730,
-  market: [
-    {name:"🌟 VIP Alpino to'plami", image:"https://picsum.photos/seed/vip/80/80", cost:500, cond:"Premium mahsulot", stock:3, tier:"premium"},
-    {name:"Eksklyuziv qo'llanma (PDF)", image:"https://picsum.photos/seed/book/80/80", cost:100, cond:null, stock:15, tier:"gold"},
-    {name:"Telegram Premium (1 oy)", image:"https://picsum.photos/seed/premium/80/80", cost:150, cond:null, stock:8, tier:"gold"},
-    {name:"Ruchka + Bloknot", image:"https://picsum.photos/seed/stationery/80/80", cost:200, cond:null, stock:20, tier:"silver"},
-    {name:"Termos", image:"https://picsum.photos/seed/thermos/80/80", cost:600, cond:"1+ referral to'lovi", stock:5, tier:"silver"},
-  ],
-  leaderboard: [
-    {name:"Sardor Aliyev", pts:1420},
-    {name:"Dilnoza Rahimova", pts:1180},
-    {name:"Jasur Toshev", pts:940},
-    {name:"Kamola Yusupova", pts:730, me:true},
-    {name:"Otabek Nurov", pts:610},
-    {name:"Madina Xolova", pts:540},
-  ],
-  approvals: [
-    {student:"Kamola Yusupova", teacher:"M. Tosheva", cat:"Vazifa · Excel", pts:3},
-    {student:"Jasur Toshev", teacher:"M. Tosheva", cat:"Topshiriq · Excel", pts:5},
-    {student:"Otabek Nurov", teacher:"B. Rashidov", cat:"Imtihon · Word", pts:15},
-    {student:"Madina Xolova", teacher:"B. Rashidov", cat:"Vazifa · Word", pts:3},
-  ],
-  orders: [
-    {student:"Sardor Aliyev", item:"Alpino Hudi", pts:1100},
-    {student:"Dilnoza Rahimova", item:"Termos", pts:600},
-  ]
+  role: null,
+  points: 0,
+  market: [],
+  leaderboard: [],
+  approvals: [],
+  orders: [],
+  limits: [],
+  alerts: [],
+  pending: [],
+  history: [],
+  referral: { link: null, referred_count: 0, paid_count: 0, total_points: 0 },
 };
 
 let newProductImageData = null;
@@ -802,15 +782,16 @@ function toast(msg){
   window._tt = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
-// ===== ROLE / TAB =====
-function setRole(role){
-  document.getElementById('btnStudent').classList.toggle('active', role==='student');
-  document.getElementById('btnAdmin').classList.toggle('active', role==='admin');
-  document.getElementById('view-student').style.display = role==='student' ? 'block' : 'none';
-  document.getElementById('view-admin').style.display = role==='admin' ? 'block' : 'none';
-  if(role==='admin') renderAdminMarket();
+function showError(title, text){
+  document.getElementById('view-loading').style.display = 'none';
+  document.getElementById('view-student').style.display = 'none';
+  document.getElementById('view-admin').style.display = 'none';
+  document.getElementById('view-error').style.display = 'block';
+  document.getElementById('errorTitle').textContent = title;
+  document.getElementById('errorText').textContent = text;
 }
 
+// ===== TAB =====
 function setTab(el, scope){
   const nav = el.parentElement;
   nav.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -821,51 +802,41 @@ function setTab(el, scope){
   document.getElementById(panelId).classList.add('active');
 }
 
-function copyRef(){ toast('Havola nusxalandi'); }
+function copyRef(){
+  if(!state.referral.link){ toast('Havola hali tayyor emas'); return; }
+  navigator.clipboard.writeText(state.referral.link).then(()=>toast('Havola nusxalandi'));
+}
 
-// ===== TIER LABELS =====
-const tierLabels = {
-  premium: '🌟 Premium',
-  gold: '🥇 Gold',
-  silver: '🥈 Silver'
-};
+const tierLabels = { premium: '🌟 Premium', gold: '🥇 Gold', silver: '🥈 Silver' };
 
 // ===== RANKING CHART =====
 function renderRankChart(){
   const container = document.getElementById('rankChart');
   if(!container) return;
   container.innerHTML = '';
-  
-  const sorted = [...state.leaderboard].sort((a,b) => b.pts - a.pts);
-  const maxPts = sorted[0]?.pts || 1;
-  const top3 = sorted.slice(0, 3);
-  const top3Names = top3.map(p => p.name);
-  
-  // Show top 6 for better view
+  const sorted = [...state.leaderboard].sort((a,b) => b.points - a.points);
+  const maxPts = sorted[0]?.points || 1;
   const display = sorted.slice(0, 6);
-  
   display.forEach((row, i) => {
-    const pct = Math.max((row.pts / maxPts) * 100, 4);
-    const isMe = row.me || false;
+    const pct = Math.max((row.points / maxPts) * 100, 4);
+    const isMe = row.user_id === state.myId;
     const rank = i + 1;
-    
     let fillClass = '';
     if(isMe) fillClass = 'me';
     else if(rank === 1) fillClass = 'top1';
     else if(rank === 2) fillClass = 'top2';
     else if(rank === 3) fillClass = 'top3';
-    
     const div = document.createElement('div');
     div.className = 'rank-bar-row';
     div.innerHTML = `
       <div class="rank-bar-label">#${rank}</div>
-      <div class="rank-bar-track">
-        <div class="rank-bar-fill ${fillClass}" style="width:${pct}%;"></div>
-      </div>
-      <div class="rank-bar-pts">${row.pts}</div>
+      <div class="rank-bar-track"><div class="rank-bar-fill ${fillClass}" style="width:${pct}%;"></div></div>
+      <div class="rank-bar-pts">${row.points}</div>
     `;
     container.appendChild(div);
   });
+  const myRow = sorted.findIndex(r => r.user_id === state.myId);
+  document.getElementById('heroRank').textContent = myRow >= 0 ? `${myRow+1}-o'rin` : '—';
 }
 
 // ===== STUDENT MARKET =====
@@ -873,87 +844,53 @@ function renderMarket(){
   const container = document.getElementById('marketContainer');
   if(!container) return;
   container.innerHTML = '';
-  
-  const premiumItems = state.market.filter(item => item.tier === 'premium');
-  const goldItems = state.market.filter(item => item.tier === 'gold');
-  const silverItems = state.market.filter(item => item.tier === 'silver');
-  
-  if(premiumItems.length > 0){
-    const label = document.createElement('div');
-    label.className = 'market-section-label';
-    label.innerHTML = `<span>🌟 Premium</span><span class="line"></span>`;
-    container.appendChild(label);
+  const groups = [['premium','🌟 Premium'], ['gold','🥇 Gold'], ['silver','🥈 Silver']];
+  let any = false;
+  groups.forEach(([tier, label]) => {
+    const items = state.market.filter(i => i.tier === tier);
+    if(items.length === 0) return;
+    any = true;
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'market-section-label';
+    labelDiv.innerHTML = `<span>${label}</span><span class="line"></span>`;
+    container.appendChild(labelDiv);
     const grid = document.createElement('div');
-    grid.className = 'market-grid premium';
-    premiumItems.forEach((item) => {
-      const realIndex = state.market.indexOf(item);
-      grid.appendChild(createMarketItem(item, realIndex, 'premium'));
-    });
+    grid.className = tier === 'premium' ? 'market-grid premium' : 'market-grid';
+    items.forEach(item => grid.appendChild(createMarketItem(item, tier)));
     container.appendChild(grid);
-  }
-  
-  if(goldItems.length > 0){
-    const label = document.createElement('div');
-    label.className = 'market-section-label';
-    label.innerHTML = `<span>🥇 Gold</span><span class="line"></span>`;
-    container.appendChild(label);
-    const grid = document.createElement('div');
-    grid.className = 'market-grid';
-    goldItems.forEach((item) => {
-      const realIndex = state.market.indexOf(item);
-      grid.appendChild(createMarketItem(item, realIndex, 'gold'));
-    });
-    container.appendChild(grid);
-  }
-  
-  if(silverItems.length > 0){
-    const label = document.createElement('div');
-    label.className = 'market-section-label';
-    label.innerHTML = `<span>🥈 Silver</span><span class="line"></span>`;
-    container.appendChild(label);
-    const grid = document.createElement('div');
-    grid.className = 'market-grid';
-    silverItems.forEach((item) => {
-      const realIndex = state.market.indexOf(item);
-      grid.appendChild(createMarketItem(item, realIndex, 'silver'));
-    });
-    container.appendChild(grid);
-  }
-  
-  if(state.market.length === 0){
+  });
+  if(!any){
     container.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); padding:30px;">Marketda hozircha mahsulot yo'q</div>`;
   }
 }
 
-function createMarketItem(item, index, tier){
-  const affordable = state.points >= item.cost && item.stock > 0;
+function createMarketItem(item, tier){
+  const affordable = state.points >= item.cost_points && item.stock > 0;
   const div = document.createElement('div');
   div.className = `market-item ${tier}`;
-  const tierBadge = tierLabels[tier] || '';
+  const img = item.image_url || 'https://picsum.photos/seed/'+item.id+'/80/80';
   div.innerHTML = `
-    <div class="badge">${tierBadge}</div>
-    <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/error/80/80'">
+    <div class="badge">${tierLabels[tier] || ''}</div>
+    <img src="${img}" alt="${item.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/error/80/80'">
     <div class="market-name">${item.name}</div>
-    <div class="market-cost">${item.cost} ball</div>
-    ${item.cond ? `<div class="market-cond">${item.cond}</div>` : ''}
+    <div class="market-cost">${item.cost_points} ball</div>
+    ${item.condition_text ? `<div class="market-cond">${item.condition_text}</div>` : ''}
     <div class="market-stock">📦 ${item.stock} dona</div>
-    <button class="buy-btn" ${affordable ? '' : 'disabled'} onclick="buyItem(${index})">${affordable ? 'Sotib olish' : (item.stock<=0 ? 'Tugagan' : 'Yetarli emas')}</button>
+    <button class="buy-btn" ${affordable ? '' : 'disabled'} onclick="buyItem(${item.id})">${affordable ? 'Sotib olish' : (item.stock<=0 ? 'Tugagan' : 'Yetarli emas')}</button>
   `;
   return div;
 }
 
-function buyItem(i){
-  const item = state.market[i];
-  if(state.points < item.cost || item.stock <= 0) return;
-  state.points -= item.cost;
-  item.stock -= 1;
-  document.getElementById('pointsDisplay').textContent = state.points;
-  document.getElementById('marketBalance').textContent = state.points;
-  toast(`"${item.name}" uchun zayavka yuborildi (${item.stock} dona qoldi)`);
-  renderMarket();
-  renderAdminMarket();
-  renderRankChart();
-  saveToLocalStorage();
+async function buyItem(itemId){
+  try {
+    await api('/alpino/market/order', { method: 'POST', body: JSON.stringify({ item_id: itemId }) });
+    toast('Zayavka yuborildi, admin oflayn topshiradi');
+    await Promise.all([loadMe(), loadMarket()]);
+    renderMarket();
+    renderRankChart();
+  } catch(e) {
+    toast(e.message);
+  }
 }
 
 // ===== LEADERBOARD =====
@@ -962,141 +899,176 @@ function renderLeaderboard(){
   if(!list) return;
   list.innerHTML = '';
   state.leaderboard.forEach((row, i)=>{
+    const isMe = row.user_id === state.myId;
     const div = document.createElement('div');
     div.className = 'lb-row';
     div.innerHTML = `
       <div class="lb-rank ${i<3?'top':''}">${i+1}</div>
-      <div class="lb-name" style="${row.me ? 'color:var(--accent-1)' : ''}">${row.name}${row.me ? ' (siz)' : ''}</div>
-      <div class="lb-pts">${row.pts}</div>
+      <div class="lb-name" style="${isMe ? 'color:var(--accent-1)' : ''}">${row.full_name}${isMe ? ' (siz)' : ''}</div>
+      <div class="lb-pts">${row.points}</div>
     `;
     list.appendChild(div);
   });
 }
 
-// ===== APPROVALS =====
+// ===== PENDING / HISTORY (student) =====
+function renderPending(){
+  const list = document.getElementById('pendingList');
+  if(!list) return;
+  document.getElementById('pendingCount').textContent = state.pending.length + ' ta';
+  if(state.pending.length === 0){
+    list.innerHTML = `<div style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:12px;">Kutilayotgan taklif yo'q</div>`;
+    return;
+  }
+  list.innerHTML = state.pending.map(p => `
+    <div class="pending-item">
+      <div class="pending-top"><span class="pending-cat">${p.category}</span><span class="badge-pending">Kutilmoqda</span></div>
+      <div class="pending-desc">${p.comment || ''} · +${p.amount} ball taklif qilindi</div>
+    </div>
+  `).join('');
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(!list) return;
+  if(state.history.length === 0){
+    list.innerHTML = `<div style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:12px;">Tarix bo'sh</div>`;
+    return;
+  }
+  list.innerHTML = state.history.map(h => {
+    const isApproved = h.status === 'approved';
+    return `
+      <div class="pending-item">
+        <div class="pending-top"><span class="pending-cat">${h.category}</span><span class="pending-pts" style="color:${isApproved ? 'var(--ok)' : 'var(--danger,#e05)'}">${isApproved ? '+' : ''}${h.amount}</span></div>
+        <div class="pending-desc">${isApproved ? 'Tasdiqlandi' : ('Rad etildi: ' + (h.reject_reason || ''))}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== ADMIN: APPROVALS =====
 function renderApprovals(){
   const list = document.getElementById('approveList');
   if(!list) return;
-  list.innerHTML = '';
   document.getElementById('approveCount').textContent = state.approvals.length + ' ta';
   if(state.approvals.length === 0){
     list.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:22px;">Kutilayotgan taklif yo'q</div>`;
     return;
   }
-  state.approvals.forEach((a, i)=>{
-    const div = document.createElement('div');
-    div.className = 'approval-card';
-    div.innerHTML = `
+  list.innerHTML = state.approvals.map(a => `
+    <div class="approval-card">
       <div class="approval-head">
-        <div><div class="approval-student">${a.student}</div><div class="approval-meta">${a.teacher} taklif qildi · ${a.cat}</div></div>
-        <div class="approval-pts">+${a.pts}</div>
+        <div><div class="approval-student">${a.student_name}</div><div class="approval-meta">${a.teacher_name} taklif qildi · ${a.category}</div></div>
+        <div class="approval-pts">+${a.amount}</div>
       </div>
       <div class="approval-actions">
-        <button class="act-btn act-approve" onclick="decide(${i}, true)">Tasdiqlash</button>
-        <button class="act-btn act-reject" onclick="decide(${i}, false)">Rad etish</button>
+        <button class="act-btn act-approve" onclick="decide(${a.id}, true)">Tasdiqlash</button>
+        <button class="act-btn act-reject" onclick="decide(${a.id}, false)">Rad etish</button>
       </div>
-    `;
-    list.appendChild(div);
-  });
+    </div>
+  `).join('');
 }
 
-function decide(i, approve){
-  const a = state.approvals[i];
-  if(approve){
-    toast(`${a.student} uchun +${a.pts} ball tasdiqlandi`);
-  } else {
-    const reason = prompt('Rad etish sababini kiriting:');
-    if(reason === null) return;
-    toast(`Rad etildi, o'quvchiga sabab yuborildi`);
+async function decide(entryId, approve){
+  try {
+    if(approve){
+      await api(`/alpino/admin/approvals/${entryId}`, { method: 'POST', body: JSON.stringify({ action: 'approve' }) });
+      toast('Ball tasdiqlandi');
+    } else {
+      const reason = prompt('Rad etish sababini kiriting:');
+      if(reason === null || !reason.trim()) return;
+      await api(`/alpino/admin/approvals/${entryId}`, { method: 'POST', body: JSON.stringify({ action: 'reject', reason }) });
+      toast("Rad etildi, o'quvchiga xabar boradi");
+    }
+    await loadApprovals();
+    renderApprovals();
+  } catch(e) {
+    toast(e.message);
   }
-  state.approvals.splice(i,1);
-  renderApprovals();
 }
 
-// ===== ORDERS =====
+// ===== ADMIN: ORDERS =====
 function renderOrders(){
   const list = document.getElementById('ordersList');
   if(!list) return;
-  list.innerHTML = '';
   if(state.orders.length === 0){
     list.innerHTML = `<div style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:12px;">Faol zayavka yo'q</div>`;
     return;
   }
-  state.orders.forEach((o,i)=>{
-    const div = document.createElement('div');
-    div.className = 'order-row';
-    div.innerHTML = `
-      <div><div class="order-name">${o.item}</div><div class="order-sub">${o.student} · ${o.pts} ball</div></div>
-      <button class="fulfil-btn" onclick="fulfilOrder(${i})">Topshirildi</button>
-    `;
-    list.appendChild(div);
-  });
+  list.innerHTML = state.orders.map(o => `
+    <div class="order-row">
+      <div><div class="order-name">${o.item_name}</div><div class="order-sub">${o.buyer_name} · ${o.cost_points} ball</div></div>
+      <button class="fulfil-btn" onclick="fulfilOrder(${o.id})">Topshirildi</button>
+    </div>
+  `).join('');
 }
 
-function fulfilOrder(i){
-  toast(`${state.orders[i].student} ga sovg'a topshirildi deb belgilandi`);
-  state.orders.splice(i,1);
-  renderOrders();
+async function fulfilOrder(orderId){
+  try {
+    await api(`/alpino/admin/orders/${orderId}/fulfil`, { method: 'POST' });
+    toast("Sovg'a topshirildi deb belgilandi");
+    await loadOrders();
+    renderOrders();
+  } catch(e) {
+    toast(e.message);
+  }
 }
 
-// =============================================
-// ===== ADMIN MARKET MANAGEMENT =====
-// =============================================
-
+// ===== ADMIN: MARKET MANAGEMENT =====
 function renderAdminMarket(){
   const list = document.getElementById('adminMarketList');
   if(!list) return;
-  list.innerHTML = '';
   const count = document.getElementById('adminMarketCount');
   if(count) count.textContent = state.market.length + ' ta mahsulot';
-  
-  state.market.forEach((item, i)=>{
-    const div = document.createElement('div');
-    div.className = 'admin-market-item';
-    const tier = item.tier || 'silver';
-    div.innerHTML = `
-      <div class="admin-market-row">
-        <img src="${item.image}" class="admin-market-img" onerror="this.src='https://picsum.photos/seed/error/50/50'">
-        <div class="info">
-          <div class="name">${item.name}</div>
-          <div class="cond">${tierLabels[tier] || tier} · ${item.cond || 'Shartsiz'} · 📦 ${item.stock} dona · 💰 ${item.cost} ball</div>
-        </div>
-        <div class="admin-market-actions">
-          <select class="admin-tier-select" onchange="changeTier(${i}, this.value)">
-            <option value="premium" ${tier==='premium'?'selected':''}>🌟 Premium</option>
-            <option value="gold" ${tier==='gold'?'selected':''}>🥇 Gold</option>
-            <option value="silver" ${tier==='silver'?'selected':''}>🥈 Silver</option>
-          </select>
-          <button class="btn-edit-price" onclick="editPrice(${i})">💰</button>
-          <button class="btn-edit-stock" onclick="editStock(${i})">📦</button>
-          <button class="btn-upload" onclick="document.getElementById('upload_${i}').click()">📤</button>
-          <button class="btn-delete" onclick="deleteProduct(${i})">🗑️</button>
-          <input type="file" id="upload_${i}" class="upload-input" accept="image/*" onchange="uploadProductImage(${i}, event)">
+  list.innerHTML = state.market.map(item => {
+    const img = item.image_url || 'https://picsum.photos/seed/'+item.id+'/50/50';
+    return `
+      <div class="admin-market-item">
+        <div class="admin-market-row">
+          <img src="${img}" class="admin-market-img" onerror="this.src='https://picsum.photos/seed/error/50/50'">
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="cond">${tierLabels[item.tier] || item.tier} · ${item.condition_text || 'Shartsiz'} · 📦 ${item.stock} dona · 💰 ${item.cost_points} ball</div>
+          </div>
+          <div class="admin-market-actions">
+            <select class="admin-tier-select" onchange="changeTier(${item.id}, this.value)">
+              <option value="premium" ${item.tier==='premium'?'selected':''}>🌟 Premium</option>
+              <option value="gold" ${item.tier==='gold'?'selected':''}>🥇 Gold</option>
+              <option value="silver" ${item.tier==='silver'?'selected':''}>🥈 Silver</option>
+            </select>
+            <button class="btn-edit-price" onclick="editPrice(${item.id})">💰</button>
+            <button class="btn-edit-stock" onclick="editStock(${item.id})">📦</button>
+            <button class="btn-upload" onclick="document.getElementById('upload_${item.id}').click()">📤</button>
+            <button class="btn-delete" onclick="deleteProduct(${item.id})">🗑️</button>
+            <input type="file" id="upload_${item.id}" class="upload-input" accept="image/*" onchange="uploadProductImage(${item.id}, event)">
+          </div>
         </div>
       </div>
     `;
-    list.appendChild(div);
-  });
+  }).join('');
 }
 
-function changeTier(index, value){
-  state.market[index].tier = value;
-  toast(`"${state.market[index].name}" darajasi ${tierLabels[value]} ga o'zgartirildi`);
-  renderAdminMarket();
-  renderMarket();
-  saveToLocalStorage();
+async function patchMarketItem(itemId, fields){
+  try {
+    await api(`/alpino/admin/market/${itemId}`, { method: 'PATCH', body: JSON.stringify(fields) });
+    await loadMarket();
+    renderAdminMarket();
+    renderMarket();
+  } catch(e) {
+    toast(e.message);
+  }
 }
 
-function uploadProductImage(index, event){
+function changeTier(itemId, value){
+  patchMarketItem(itemId, { tier: value }).then(()=>toast('Daraja o\'zgartirildi'));
+}
+
+function uploadProductImage(itemId, event){
   const file = event.target.files[0];
   if(!file) return;
   const reader = new FileReader();
   reader.onload = function(e){
-    state.market[index].image = e.target.result;
-    toast(`"${state.market[index].name}" rasmi yangilandi!`);
-    renderAdminMarket();
-    renderMarket();
-    saveToLocalStorage();
+    patchMarketItem(itemId, { image_url: e.target.result }).then(()=>toast('Rasm yangilandi'));
   };
   reader.readAsDataURL(file);
 }
@@ -1112,118 +1084,177 @@ function previewNewProductImage(event){
   reader.readAsDataURL(file);
 }
 
-function editPrice(index){
-  const item = state.market[index];
-  const newPrice = prompt(`"${item.name}" uchun yangi narxni kiriting:`, item.cost);
-  if(newPrice !== null && !isNaN(newPrice) && Number(newPrice) >= 0){
-    item.cost = Number(newPrice);
-    toast(`"${item.name}" narxi ${item.cost} ballga o'zgartirildi`);
-    renderAdminMarket();
-    renderMarket();
-    saveToLocalStorage();
+function editPrice(itemId){
+  const item = state.market.find(i => i.id === itemId);
+  if(!item) return;
+  const newPrice = prompt(`"${item.name}" uchun yangi narxni kiriting:`, item.cost_points);
+  if(newPrice !== null && !isNaN(newPrice) && Number(newPrice) > 0){
+    patchMarketItem(itemId, { cost_points: Number(newPrice) }).then(()=>toast('Narx yangilandi'));
   }
 }
 
-function editStock(index){
-  const item = state.market[index];
+function editStock(itemId){
+  const item = state.market.find(i => i.id === itemId);
+  if(!item) return;
   const newStock = prompt(`"${item.name}" uchun yangi miqdorni kiriting:`, item.stock);
   if(newStock !== null && !isNaN(newStock) && Number(newStock) >= 0){
-    item.stock = Number(newStock);
-    toast(`"${item.name}" miqdori ${item.stock} donaga o'zgartirildi`);
-    renderAdminMarket();
-    renderMarket();
-    saveToLocalStorage();
+    patchMarketItem(itemId, { stock: Number(newStock) }).then(()=>toast('Miqdor yangilandi'));
   }
 }
 
-function deleteProduct(index){
-  const item = state.market[index];
+function deleteProduct(itemId){
+  const item = state.market.find(i => i.id === itemId);
+  if(!item) return;
   if(confirm(`"${item.name}" ni marketdan o'chirmoqchimisiz?`)){
-    state.market.splice(index, 1);
-    toast(`"${item.name}" o'chirildi`);
-    renderAdminMarket();
-    renderMarket();
-    saveToLocalStorage();
+    patchMarketItem(itemId, { is_active: false }).then(()=>toast("O'chirildi"));
   }
 }
 
-function addProduct(){
+async function addProduct(){
   const name = document.getElementById('newProductName').value.trim();
-  const cost = Number(document.getElementById('newProductCost').value) || 0;
-  const cond = document.getElementById('newProductCond').value.trim() || null;
+  const cost_points = Number(document.getElementById('newProductCost').value) || 0;
+  const condition_text = document.getElementById('newProductCond').value.trim() || null;
   const stock = Number(document.getElementById('newProductStock').value) || 0;
   const tier = document.getElementById('newProductTier').value;
-  const image = newProductImageData || 'https://picsum.photos/seed/'+Date.now()+'/80/80';
-  
-  if(!name){
-    toast('Mahsulot nomini kiriting!');
+  const image_url = newProductImageData;
+
+  if(!name){ toast('Mahsulot nomini kiriting!'); return; }
+  if(cost_points <= 0){ toast('Narxni kiriting (0 dan katta)!'); return; }
+
+  try {
+    await api('/alpino/admin/market', { method: 'POST', body: JSON.stringify({ name, cost_points, condition_text, stock, tier, image_url }) });
+    toast(`"${name}" qo'shildi!`);
+    document.getElementById('newProductName').value = '';
+    document.getElementById('newProductCost').value = '';
+    document.getElementById('newProductCond').value = '';
+    document.getElementById('newProductStock').value = '';
+    document.getElementById('newProductPreview').src = 'https://picsum.photos/seed/default/80/80';
+    document.getElementById('newProductUpload').value = '';
+    newProductImageData = null;
+    await loadMarket();
+    renderAdminMarket();
+    renderMarket();
+  } catch(e) {
+    toast(e.message);
+  }
+}
+
+// ===== ADMIN: LIMITS =====
+function renderLimits(){
+  const list = document.getElementById('limitsList');
+  if(!list) return;
+  list.innerHTML = state.limits.map(l => `
+    <div class="limit-row"><span class="limit-name">${l.label}</span><input class="limit-input" type="number" data-category="${l.category}" value="${l.max_points}"></div>
+  `).join('');
+}
+
+async function saveLimits(){
+  const inputs = document.querySelectorAll('#limitsList .limit-input');
+  const body = {};
+  inputs.forEach(inp => { body[inp.dataset.category] = Number(inp.value) || 0; });
+  try {
+    await api('/alpino/admin/limits', { method: 'POST', body: JSON.stringify(body) });
+    toast('Chegaralar saqlandi');
+  } catch(e) {
+    toast(e.message);
+  }
+}
+
+// ===== ADMIN: ALERTS =====
+function renderAlerts(){
+  const list = document.getElementById('alertsList');
+  if(!list) return;
+  if(state.alerts.length === 0){
+    list.innerHTML = `<div class="card" style="color:var(--ink-mute); font-size:12.5px; text-align:center; padding:22px;">Faol signal yo'q</div>`;
     return;
   }
-  if(cost <= 0){
-    toast('Narxni kiriting (0 dan katta)!');
-    return;
-  }
-  
-  state.market.push({name, image, cost, cond, stock, tier});
-  toast(`"${name}" qo'shildi! (${tierLabels[tier]})`);
-  
-  document.getElementById('newProductName').value = '';
-  document.getElementById('newProductCost').value = '';
-  document.getElementById('newProductCond').value = '';
-  document.getElementById('newProductStock').value = '';
-  document.getElementById('newProductPreview').src = 'https://picsum.photos/seed/default/80/80';
-  document.getElementById('newProductUpload').value = '';
-  newProductImageData = null;
-  
-  renderAdminMarket();
+  list.innerHTML = state.alerts.map(a => `
+    <div class="alert-card">
+      <div class="alert-title">${a.title}</div>
+      <div class="alert-body">${a.body}</div>
+    </div>
+  `).join('');
+}
+
+// =============================================
+// ===== MA'LUMOT YUKLASH (API chaqiruvlari) =====
+// =============================================
+
+async function loadMe(){
+  const me = await api('/alpino/me');
+  state.myId = me.id;
+  state.points = me.balance;
+  document.getElementById('pointsDisplay').textContent = me.balance;
+  document.getElementById('marketBalance').textContent = me.balance;
+  document.getElementById('heroName').textContent = me.full_name;
+  document.getElementById('profileName').textContent = me.full_name;
+  document.getElementById('profileRole').textContent = me.role === 'admin' ? 'Admin' : (me.role === 'teacher' ? "O'qituvchi" : "O'quvchi");
+  return me;
+}
+async function loadMarket(){ state.market = await api('/alpino/market'); }
+async function loadLeaderboard(){ state.leaderboard = await api('/alpino/leaderboard'); }
+async function loadPending(){ state.pending = await api('/alpino/pending'); }
+async function loadHistory(){ state.history = await api('/alpino/history'); }
+async function loadReferral(){ state.referral = await api('/alpino/referral');
+  document.getElementById('refLinkText').textContent = state.referral.link || 'Havola sozlanmagan';
+  document.getElementById('refCountReferred').textContent = state.referral.referred_count;
+  document.getElementById('refCountPaid').textContent = state.referral.paid_count;
+  document.getElementById('refTotalPoints').textContent = '+' + state.referral.total_points;
+}
+async function loadApprovals(){ state.approvals = await api('/alpino/admin/approvals'); }
+async function loadOrders(){ state.orders = await api('/alpino/admin/orders?status=pending'); }
+async function loadLimits(){ state.limits = await api('/alpino/admin/limits'); }
+async function loadAlerts(){ state.alerts = await api('/alpino/admin/alerts'); }
+async function loadKpi(){
+  const kpi = await api('/alpino/admin/kpi');
+  document.getElementById('kpiBlocked').textContent = kpi.blocked_unregistered;
+  document.getElementById('kpiEnrolled').textContent = kpi.enrolled;
+}
+
+async function initStudent(){
+  document.getElementById('view-student').style.display = 'block';
+  await Promise.all([loadMarket(), loadLeaderboard(), loadPending(), loadHistory(), loadReferral()]);
   renderMarket();
-  saveToLocalStorage();
+  renderLeaderboard();
+  renderPending();
+  renderHistory();
+  renderRankChart();
 }
 
-function saveMarketChanges(){
-  saveToLocalStorage();
-  toast('Barcha o\'zgarishlar saqlandi! (localStorage)');
+async function initAdmin(){
+  document.getElementById('view-admin').style.display = 'block';
+  await Promise.all([loadApprovals(), loadMarket(), loadOrders(), loadLimits(), loadAlerts(), loadKpi()]);
+  renderApprovals();
+  renderAdminMarket();
+  renderOrders();
+  renderLimits();
+  renderAlerts();
 }
 
-function saveToLocalStorage(){
+async function init(){
   try {
-    localStorage.setItem('alpino_market', JSON.stringify(state.market));
-    localStorage.setItem('alpino_points', JSON.stringify(state.points));
+    const me = await loadMe();
+    document.getElementById('view-loading').style.display = 'none';
+    state.role = me.role;
+    if(me.role === 'student'){
+      await initStudent();
+    } else if(me.role === 'admin'){
+      await initAdmin();
+    } else {
+      showError("Bu ilova sizga mo'ljallanmagan", "Ball qo'yish uchun botdagi buyruqdan foydalaning.");
+    }
   } catch(e) {
-    console.log('localStorage saqlashda xatolik:', e);
+    if(e.code === 'not_registered'){
+      showError("Ro'yxatdan o'tmagansiz", "Alpino faqat ro'yxatdan o'tgan o'quvchilar uchun.");
+    } else if(e.code === 'module_disabled'){
+      showError("Hozircha faol emas", "Alpino hali ishga tushirilmagan, birozdan so'ng qaytadan urinib ko'ring.");
+    } else {
+      showError("Xatolik", e.message || "Noma'lum xatolik yuz berdi");
+    }
   }
 }
 
-function loadFromLocalStorage(){
-  try {
-    const savedMarket = localStorage.getItem('alpino_market');
-    const savedPoints = localStorage.getItem('alpino_points');
-    if(savedMarket) {
-      const parsed = JSON.parse(savedMarket);
-      if(parsed && parsed.length > 0) {
-        state.market = parsed;
-      }
-    }
-    if(savedPoints) {
-      const pts = JSON.parse(savedPoints);
-      if(typeof pts === 'number') {
-        state.points = pts;
-        document.getElementById('pointsDisplay').textContent = state.points;
-        document.getElementById('marketBalance').textContent = state.points;
-      }
-    }
-  } catch(e) {
-    console.log('localStorage yuklashda xatolik:', e);
-  }
-}
-
-// ===== INIT =====
-loadFromLocalStorage();
-renderRankChart();
-renderMarket();
-renderLeaderboard();
-renderApprovals();
-renderOrders();
+init();
 </script>
 </body>
 </html>
