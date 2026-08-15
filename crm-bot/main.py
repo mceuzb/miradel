@@ -9,7 +9,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import get_config
 from bot.database.engine import async_session, init_db
 from bot.handlers import (
-    admin, broadcast_lead, channel_membership, common, public, start, student, teacher,
+    admin, broadcast_lead, channel_membership, common, login, public, start, student, teacher,
 )
 # card_order olib tashlandi - bu funksiyadan voz kechilgan edi
 from bot.middlewares.access_control import AccessControlMiddleware
@@ -46,6 +46,7 @@ async def main() -> None:
     dp.chat_member.outer_middleware(DbSessionMiddleware())
 
     dp.include_router(start.router)
+    dp.include_router(login.router)
     dp.include_router(public.router)
     dp.include_router(broadcast_lead.router)
     dp.include_router(common.router)
