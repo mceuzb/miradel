@@ -23,6 +23,10 @@ class UserStatus(str, enum.Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     BLOCKED = "blocked"
+    # Admin tomonidan tozalangan (masalan sinov paytida xato tasdiqlangan,
+    # haqiqiy o'quvchi bo'lmagan) - oddiy "topilmadi" xabari ko'rsatiladi,
+    # bloklangan/rad etilgandan farqli o'laroq (bot/middlewares/access_control.py).
+    REMOVED = "removed"
 
 
 class LessonStatus(str, enum.Enum):
