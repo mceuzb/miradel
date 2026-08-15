@@ -61,3 +61,8 @@ class CredentialsLogin(StatesGroup):
     o'quvchi login+parol kiritib o'z hisobini shu Telegram akkauntga bog'laydi."""
     waiting_login = State()
     waiting_password = State()
+
+
+class RemoveStudent(StatesGroup):
+    """Admin sinov paytida xato tasdiqlangan o'quvchini ism bo'yicha qidirib o'chiradi."""
+    waiting_query = State()
