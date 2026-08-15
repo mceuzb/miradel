@@ -80,12 +80,18 @@ class User(Base):
     # ---- Login/parol orqali ro'yxatga olish (telegramsiz o'quvchilar) ----
     # "telegram_lead": botga o'zi /start bosib kirgan (eski, standart oqim).
     # "teacher_enrolled": o'qituvchi ism-familiya+guruh bilan qo'lda qo'shgan.
-    # Alpino faqat "teacher_enrolled" + status=APPROVED bo'lgan o'quvchilarga
-    # ochiq (bot/services/alpino_access.py).
+    # source - shunchaki qaysi kanaldan kelganini bildiradi (statistika uchun).
+    # Alpino kirish huquqi ESA source'ga emas, balki pastdagi alpino_verified
+    # maydoniga bog'liq: login+parol TO'G'RI kiritilgandagina True bo'ladi
+    # (bot/services/teacher_student_service.link_telegram_by_credentials).
+    # Bu Telegram allaqachon bog'langan (eski, oldindan tasdiqlangan)
+    # o'quvchilarga ham tegishli - ular ham login/parolni kiritmaguncha
+    # Alpino'ga kira olmaydi.
     source: Mapped[str] = mapped_column(String(20), default="telegram_lead")
     login: Mapped[str | None] = mapped_column(String(16), unique=True, nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     added_by_teacher_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    alpino_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
     taught_groups: Mapped[list["Group"]] = relationship(back_populates="teacher")
     group_memberships: Mapped[list["GroupStudent"]] = relationship(back_populates="student")
