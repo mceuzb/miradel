@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.database.models import Group, GroupStudent, User, UserRole
 from bot.keyboards.admin_kb import teacher_student_approval_kb
 from bot.middlewares.role_check import require_role
-from bot.services.teacher_student_service import get_teacher_added_pending
+from bot.services.teacher_student_service import get_teacher_added_pending, grandfather_existing_approved_students
 from bot.services.user_service import approve_user, reject_user
 
 router = Router(name="admin_teacher_students")
@@ -77,3 +77,46 @@ async def reject_ts_callback(callback: CallbackQuery, session: AsyncSession, **k
 
     await callback.message.edit_text(callback.message.text + "\n\n❌ Rad etildi")
     await callback.answer("Rad etildi")
+
+
+@router.message(F.text == "🎓 Eski o'quvchilarni Alpino'ga ulash")
+@require_role(UserRole.ADMIN)
+async def grandfather_students(message: Message, session: AsyncSession, **kwargs):
+    """Bu login/parol tizimi qo'shilishidan oldin Telegram orqali ro'yxatdan
+    o'tib, allaqachon tasdiqlangan o'quvchilarga login+parol yaratib beradi
+    va ularga botdan xabar yuboradi. Alpino ULARGA HAM faqat shu kodni
+    botda "🔑 Alpino kodini kiritish" orqali tasdiqlashgandan keyin ochiladi -
+    hech kim avtomatik ravishda Alpino olmaydi."""
+    created = await grandfather_existing_approved_students(session)
+    if not created:
+        await message.answer(
+            "✅ Barcha tasdiqlangan o'quvchilarga login/parol allaqachon berilgan. "
+            "Ularning har biri Alpino'ga kirish uchun botda \"🔑 Alpino kodini "
+            "kiritish\" orqali kodini tasdiqlashi kerak."
+        )
+        return
+
+    sent = 0
+    for student, password in created:
+        if not student.telegram_id:
+            continue
+        try:
+            await message.bot.send_message(
+                student.telegram_id,
+                f"🔑 Sizga Alpino'dan foydalanish uchun kirish kodi berildi!\n\n"
+                f"Login: <code>{student.login}</code>\n"
+                f"Parol: <code>{password}</code>\n\n"
+                f'Botdagi "🔑 Alpino kodini kiritish" tugmasini bosib, shu login va '
+                f"parolni kiriting - shundan keyin Alpino ochiladi.",
+                parse_mode="HTML",
+            )
+            sent += 1
+        except Exception:
+            continue
+
+    await message.answer(
+        f"✅ {len(created)} ta o'quvchiga login/parol yaratildi, {sent} tasiga botda "
+        f"xabar yuborildi (qolganlari botni bloklagan yoki xabar yetkazib bo'lmagan).\n\n"
+        f"Ular \"🔑 Alpino kodini kiritish\" tugmasi orqali kodni o'zlari kiritmaguncha "
+        f"Alpino'ga kira olishmaydi."
+    )
