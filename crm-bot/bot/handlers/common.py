@@ -21,7 +21,7 @@ async def alpino_open_webapp(message: Message, db_user: User | None, session: As
     if db_user is None:
         return
     url = get_config().get_alpino_url()
-    if not url or not await alpino_access_allowed(session, db_user.role):
+    if not url or not await alpino_access_allowed(session, db_user):
         await message.answer("Alpino hozircha faol emas.")
         return
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -38,6 +38,6 @@ async def recheck_subscription(callback: CallbackQuery, db_user: User | None, se
     if db_user:
         await callback.message.answer(
             "✅ Rahmat! Botdan foydalanishingiz mumkin.",
-            reply_markup=await menu_for_role(session, db_user.role),
+            reply_markup=await menu_for_role(session, db_user),
         )
     await callback.answer()
