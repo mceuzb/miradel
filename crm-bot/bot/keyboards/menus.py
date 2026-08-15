@@ -66,6 +66,7 @@ async def admin_menu_kb(session: AsyncSession, user: User) -> ReplyKeyboardMarku
         [KeyboardButton(text="🎛 Konkurslarni boshqarish"), KeyboardButton(text="📢 Ommaviy xabar")],
         [KeyboardButton(text="🎫 Referal kartalar")],
         [KeyboardButton(text="🎓 Eski o'quvchilarni Alpino'ga ulash")],
+        [KeyboardButton(text="🗑 O'quvchini o'chirish")],
     ]
     alpino = await _alpino_row(session, user)
     if alpino:
