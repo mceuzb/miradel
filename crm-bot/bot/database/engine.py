@@ -61,7 +61,10 @@ _MISSING_COLUMN_PATCHES: list[str] = [
 # uchun) - klass nomining kichik harflari: "userstatus".
 _MISSING_ENUM_VALUE_PATCHES: list[tuple[str, str]] = [
     # (enum turi nomi, qo'shiladigan yangi qiymat)
-    ("userstatus", "removed"),
+    # DIQQAT: SQLAlchemy `Enum(UserStatus)` bazaga Python enum a'zosining
+    # NOMINI yozadi (masalan "REMOVED"), qiymatini ("removed") emas -
+    # shuning uchun bu yerda ham KATTA harf bilan bo'lishi shart.
+    ("userstatus", "REMOVED"),
 ]
 
 
