@@ -48,3 +48,16 @@ class BroadcastCreation(StatesGroup):
 class BroadcastLeadCapture(StatesGroup):
     waiting_name = State()
     waiting_phone = State()
+
+
+class TeacherAddStudent(StatesGroup):
+    """O'qituvchi o'quvchini telegramsiz, ism-familiya+guruh bilan qo'shishi."""
+    waiting_full_name = State()
+    waiting_group = State()
+
+
+class CredentialsLogin(StatesGroup):
+    """Guruhga o'qituvchi tomonidan qo'shilgan, hali telegram_id bog'lanmagan
+    o'quvchi login+parol kiritib o'z hisobini shu Telegram akkauntga bog'laydi."""
+    waiting_login = State()
+    waiting_password = State()
