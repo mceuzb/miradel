@@ -20,6 +20,7 @@ class LinkResult(str, enum.Enum):
     BAD_CREDENTIALS = "bad_credentials"  # login yoki parol xato
     ALREADY_LINKED = "already_linked"    # bu login boshqa Telegram hisobiga allaqachon bog'langan
     TELEGRAM_TAKEN = "telegram_taken"    # bu Telegram hisobi allaqachon boshqa profilga bog'langan
+    REMOVED = "removed"                  # bu hisob admin tomonidan tozalangan (o'chirilgan)
 
 
 async def _generate_unique_login(session: AsyncSession) -> str:
@@ -115,6 +116,9 @@ async def link_telegram_by_credentials(
     user = await session.scalar(select(User).where(User.login == login.strip().upper()))
     if user is None or not user.password_hash or not verify_password(password, user.password_hash):
         return LinkResult.BAD_CREDENTIALS, None
+
+    if user.status == UserStatus.REMOVED:
+        return LinkResult.REMOVED, None
 
     if user.telegram_id is not None and user.telegram_id != telegram_id:
         return LinkResult.ALREADY_LINKED, None
