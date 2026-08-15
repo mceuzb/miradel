@@ -13,19 +13,16 @@ from bot.services.module_service import is_module_enabled
 
 ALPINO_MODULE_KEY = "alpino_module"
 
-# Faqat shu manbadan kelgan (o'qituvchi ism-familiya+guruh bilan qo'lda
-# qo'shgan) o'quvchilar Alpino'dan foydalana oladi - Telegram orqali o'zi
-# yozilgan ("telegram_lead") o'quvchilar bunga kirmaydi, hatto admin
-# tasdiqlagan bo'lsa ham. O'qituvchi/admin rollariga bu cheklov tegishli emas.
-TEACHER_ENROLLED_SOURCE = "teacher_enrolled"
-
 
 async def alpino_access_allowed(session: AsyncSession, user: User) -> bool:
     """Admin - har doim True (sinov uchun). O'qituvchi - modul yoqilgan bo'lsa.
-    O'quvchi - modul yoqilgan BO'LISHI VA o'qituvchi tomonidan qo'lda
-    qo'shilgan (source=teacher_enrolled) bo'lishi kerak."""
+    O'quvchi - modul yoqilgan BO'LISHI VA login+parolini bot orqali
+    tasdiqlagan (alpino_verified=True) bo'lishi kerak - bu login/parolni
+    o'qituvchi/admin bergan, botda "🔑 Login orqali kirish" yoki
+    "🔑 Alpino kodini kiritish" orqali kiritilgan bo'ladi
+    (bot/services/teacher_student_service.link_telegram_by_credentials)."""
     if user.role == UserRole.ADMIN:
         return True
-    if user.role == UserRole.STUDENT and user.source != TEACHER_ENROLLED_SOURCE:
+    if user.role == UserRole.STUDENT and not user.alpino_verified:
         return False
     return await is_module_enabled(session, ALPINO_MODULE_KEY)
