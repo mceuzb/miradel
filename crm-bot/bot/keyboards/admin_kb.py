@@ -52,6 +52,17 @@ def approval_kb(user_id: int) -> InlineKeyboardMarkup:
     ])
 
 
+def teacher_student_approval_kb(user_id: int) -> InlineKeyboardMarkup:
+    """O'qituvchi qo'lda qo'shgan o'quvchi uchun - rol tanlash shart emas
+    (har doim o'quvchi), shuning uchun oddiy tasdiqlash/rad etish tugmalari."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"approve_ts:{user_id}"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_ts:{user_id}"),
+        ],
+    ])
+
+
 def modules_kb(modules) -> InlineKeyboardMarkup:
     rows = []
     for m in modules:
