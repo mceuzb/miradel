@@ -49,6 +49,10 @@ _MISSING_COLUMN_PATCHES: list[str] = [
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS added_by_teacher_id INTEGER REFERENCES users(id)",
     "CREATE UNIQUE INDEX IF NOT EXISTS ux_users_login ON users(login) WHERE login IS NOT NULL",
+    # Alpino kirish huquqi login+parol TO'G'RI kiritilganda True bo'ladi -
+    # eski (allaqachon Telegram bog'langan) o'quvchilar ham shu orqali
+    # o'tishi shart (bot/handlers/login.py).
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS alpino_verified BOOLEAN NOT NULL DEFAULT FALSE",
 ]
 
 
