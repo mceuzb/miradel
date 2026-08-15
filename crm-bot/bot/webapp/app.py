@@ -17,7 +17,7 @@ from bot.database.models import (
     AlpinoCategoryLimit, AlpinoFunnelEvent, AlpinoMarketItem, AlpinoMarketOrder,
     AlpinoOrderStatus, AlpinoPointsHistory, AlpinoPointsStatus, User, UserRole, UserStatus,
 )
-from bot.services import alpino_service
+from bot.services import alpino_service, group_service
 from bot.services.alpino_access import alpino_access_allowed
 from bot.webapp.webapp_auth import verify_init_data
 
@@ -431,6 +431,102 @@ async def admin_kpi(request: web.Request) -> web.Response:
 
 
 # ---------------------------------------------------------------------------
+# O'qituvchi endpoint'lari - guruh boshqaruvi (yangi rol tizimi)
+# O'qituvchi Alpino ichida: o'zi botda qo'shgan o'quvchilarini o'ziga
+# biriktirilgan guruhlarga jamlashi, guruh nomlashi, o'quvchilarni
+# guruhdan-guruhga ko'chirishi mumkin. Guruhning ochiq/yopiqligi
+# (enrollment_status) - bu faqat qabul marketingi uchun, bu yerga
+# taalluqli emas.
+# ---------------------------------------------------------------------------
+
+def _require_teacher(user: User) -> web.Response | None:
+    if user.role != UserRole.TEACHER:
+        return web.json_response({"ok": False, "error": "forbidden"}, status=403)
+    return None
+
+
+async def teacher_groups(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_teacher(user)) is not None:
+        return err
+    groups = await group_service.get_teacher_groups(session, user.id)
+    counts = await group_service.get_group_student_counts(session, [g.id for g in groups])
+    data = [
+        {"id": g.id, "name": g.name, "subject": g.subject, "student_count": counts.get(g.id, 0)}
+        for g in groups
+    ]
+    return web.json_response({"ok": True, "data": data})
+
+
+async def teacher_group_create(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_teacher(user)) is not None:
+        return err
+    body = await request.json()
+    name = (body.get("name") or "").strip()
+    if not name:
+        return web.json_response({"ok": False, "error": "bad_request", "message": "Guruh nomi kerak"}, status=400)
+    group = await group_service.create_teacher_group(session, user.id, name, body.get("subject"))
+    return web.json_response({"ok": True, "data": {"id": group.id}})
+
+
+async def teacher_group_rename(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_teacher(user)) is not None:
+        return err
+    body = await request.json()
+    name = (body.get("name") or "").strip()
+    if not name:
+        return web.json_response({"ok": False, "error": "bad_request", "message": "Guruh nomi kerak"}, status=400)
+    group = await group_service.rename_teacher_group(session, user.id, int(request.match_info["id"]), name)
+    if group is None:
+        return web.json_response({"ok": False, "error": "not_found"}, status=404)
+    return web.json_response({"ok": True})
+
+
+async def teacher_students(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_teacher(user)) is not None:
+        return err
+    pairs = await group_service.get_teacher_students_with_current_group(session, user.id)
+    data = [
+        {
+            "id": s.id, "full_name": s.full_name, "status": s.status.value,
+            "login": s.login, "group_id": group_id,
+        }
+        for s, group_id in pairs
+    ]
+    return web.json_response({"ok": True, "data": data})
+
+
+async def teacher_group_add_student(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_teacher(user)) is not None:
+        return err
+    group_id = int(request.match_info["id"])
+    body = await request.json()
+    student_id = body.get("student_id")
+    if not student_id:
+        return web.json_response({"ok": False, "error": "bad_request", "message": "student_id kerak"}, status=400)
+    ok = await group_service.move_student_to_group(session, user.id, group_id, int(student_id))
+    if not ok:
+        return web.json_response({"ok": False, "error": "not_found"}, status=404)
+    return web.json_response({"ok": True})
+
+
+async def teacher_group_remove_student(request: web.Request) -> web.Response:
+    session, user = request["session"], request["user"]
+    if (err := _require_teacher(user)) is not None:
+        return err
+    group_id = int(request.match_info["id"])
+    student_id = int(request.match_info["student_id"])
+    ok = await group_service.remove_student_from_teacher_group(session, user.id, group_id, student_id)
+    if not ok:
+        return web.json_response({"ok": False, "error": "not_found"}, status=404)
+    return web.json_response({"ok": True})
+
+
+# ---------------------------------------------------------------------------
 # App yaratish / ishga tushirish
 # ---------------------------------------------------------------------------
 
@@ -458,6 +554,13 @@ def create_app() -> web.Application:
     app.router.add_post("/alpino/admin/limits", admin_limits_update)
     app.router.add_get("/alpino/admin/alerts", admin_alerts)
     app.router.add_get("/alpino/admin/kpi", admin_kpi)
+
+    app.router.add_get("/alpino/teacher/groups", teacher_groups)
+    app.router.add_post("/alpino/teacher/groups", teacher_group_create)
+    app.router.add_patch("/alpino/teacher/groups/{id}", teacher_group_rename)
+    app.router.add_get("/alpino/teacher/students", teacher_students)
+    app.router.add_post("/alpino/teacher/groups/{id}/students", teacher_group_add_student)
+    app.router.add_delete("/alpino/teacher/groups/{id}/students/{student_id}", teacher_group_remove_student)
 
     return app
 
