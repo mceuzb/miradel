@@ -39,7 +39,7 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext):
         if user.status == UserStatus.APPROVED:
             await message.answer(
                 f"Xush kelibsiz, {user.full_name}!",
-                reply_markup=await menu_for_role(session, user.role),
+                reply_markup=await menu_for_role(session, user),
             )
         elif user.status == UserStatus.PENDING:
             await message.answer("⏳ Arizangiz hali ko'rib chiqilmoqda. Iltimos, kuting.")
@@ -58,7 +58,7 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext):
 async def start_registration(message: Message, session: AsyncSession, state: FSMContext, **kwargs):
     existing = await get_user_by_telegram_id(session, message.from_user.id)
     if existing is not None and existing.status == UserStatus.APPROVED:
-        await message.answer("Siz allaqachon ro'yxatdan o'tgansiz.", reply_markup=await menu_for_role(session, existing.role))
+        await message.answer("Siz allaqachon ro'yxatdan o'tgansiz.", reply_markup=await menu_for_role(session, existing))
         return
     if existing is not None and existing.status == UserStatus.PENDING:
         await message.answer("⏳ Arizangiz allaqachon yuborilgan, admin javobini kuting.")
