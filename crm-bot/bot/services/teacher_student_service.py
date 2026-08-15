@@ -70,27 +70,63 @@ async def get_teacher_added_pending(session: AsyncSession) -> list[User]:
     return list(result.scalars().all())
 
 
+async def grandfather_existing_approved_students(session: AsyncSession) -> list[tuple[User, str]]:
+    """Bu login/parol tizimi qo'shilishidan OLDIN Telegram orqali o'zi
+    ro'yxatdan o'tib, admin tomonidan allaqachon tasdiqlangan (va Telegram'i
+    allaqachon bog'langan) o'quvchilarga ham login+parol yaratib beradi.
+
+    MUHIM: bu FAQAT login/parol beradi - Alpino avtomatik ochilmaydi.
+    O'quvchi Alpino'ga kirishdan oldin baribir botda ushbu login+parolni
+    "🔑 Alpino kodini kiritish" orqali o'zi tasdiqlashi shart
+    (link_telegram_by_credentials - alpino_verified shu yerda True bo'ladi).
+
+    Idempotent: faqat hali login berilmagan (`login IS NULL`) tasdiqlangan
+    o'quvchilarga tegadi, shuning uchun necha marta chaqirilsa ham xavfsiz -
+    allaqachon login olganlarga qayta tegmaydi."""
+    result = await session.execute(
+        select(User).where(
+            User.role == UserRole.STUDENT,
+            User.status == UserStatus.APPROVED,
+            User.login.is_(None),
+        )
+    )
+    students = list(result.scalars().all())
+    created: list[tuple[User, str]] = []
+    for student in students:
+        login = await _generate_unique_login(session)
+        password = generate_password()
+        student.login = login
+        student.password_hash = hash_password(password)
+        created.append((student, password))
+    await session.commit()
+    return created
+
+
 async def link_telegram_by_credentials(
     session: AsyncSession, login: str, password: str, telegram_id: int, username: str | None,
 ) -> tuple[LinkResult, User | None]:
-    """Login+parolni tekshiradi va to'g'ri bo'lsa shu Telegram hisobini
-    profilga bog'laydi (birinchi marta). Profil allaqachon shu telegram_id'ga
-    bog'langan bo'lsa ham OK qaytaradi (qayta urinishlar xavfsiz)."""
+    """Login+parolni tekshiradi. To'g'ri bo'lsa:
+    - agar profilda hali Telegram bog'lanmagan bo'lsa (yangi, o'qituvchi
+      qo'shgan o'quvchi) - shu Telegram hisobini bog'laydi;
+    - agar profil ALLAQACHON shu Telegram hisobiga bog'langan bo'lsa (eski,
+      oldindan tasdiqlangan o'quvchi) - qayta bog'lash shart emas.
+    Ikkala holatda ham `alpino_verified=True` qilib belgilaydi - Alpino
+    kirish huquqi aynan shu yerda ochiladi (bot/services/alpino_access.py)."""
     user = await session.scalar(select(User).where(User.login == login.strip().upper()))
     if user is None or not user.password_hash or not verify_password(password, user.password_hash):
         return LinkResult.BAD_CREDENTIALS, None
 
-    if user.telegram_id is not None:
-        if user.telegram_id == telegram_id:
-            return LinkResult.OK, user
+    if user.telegram_id is not None and user.telegram_id != telegram_id:
         return LinkResult.ALREADY_LINKED, None
 
-    other = await session.scalar(select(User).where(User.telegram_id == telegram_id))
-    if other is not None:
-        return LinkResult.TELEGRAM_TAKEN, None
+    if user.telegram_id is None:
+        other = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+        if other is not None:
+            return LinkResult.TELEGRAM_TAKEN, None
+        user.telegram_id = telegram_id
+        user.username = username
 
-    user.telegram_id = telegram_id
-    user.username = username
+    user.alpino_verified = True
     await session.commit()
     await session.refresh(user)
     return LinkResult.OK, user
