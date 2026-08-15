@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import User, UserStatus
 from bot.keyboards.menus import guest_menu_kb, menu_for_role, remove_kb
+from bot.middlewares.access_control import REMOVED_TEXT
 from bot.services.teacher_student_service import LinkResult, link_telegram_by_credentials
 from bot.utils.states import CredentialsLogin
 
@@ -71,6 +72,10 @@ async def login_enter_password(message: Message, state: FSMContext, session: Asy
             "❌ Login yoki parol noto'g'ri. Qaytadan urinib ko'ring.",
             reply_markup=fallback_kb,
         )
+        return
+
+    if result == LinkResult.REMOVED:
+        await message.answer(REMOVED_TEXT)
         return
 
     if result == LinkResult.ALREADY_LINKED:
