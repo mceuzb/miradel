@@ -726,6 +726,40 @@
     </div>
   </div>
 
+  <!-- ============ TEACHER VIEW ============ -->
+  <div id="view-teacher" style="display:none;">
+
+    <div class="section" style="padding-top:10px;">
+
+      <div class="panel active" id="t-groups">
+        <div class="section-head"><div class="section-title">Mening guruhlarim</div><div class="section-sub" id="teacherGroupCount">0 ta</div></div>
+        <div id="teacherGroupList"></div>
+        <div class="card">
+          <div class="section-title" style="font-size:13px; margin-bottom:8px;">Yangi guruh yaratish</div>
+          <div class="row">
+            <input type="text" id="newGroupName" placeholder="Guruh nomi (masalan: 9-A)">
+          </div>
+          <button class="add-btn" onclick="createGroup()">➕ Guruh yaratish</button>
+        </div>
+      </div>
+
+      <div class="panel" id="t-students">
+        <div class="section-head"><div class="section-title">Mening o'quvchilarim</div><div class="section-sub" id="teacherStudentCount">0 ta</div></div>
+        <div id="teacherStudentList"></div>
+      </div>
+
+    </div>
+
+    <div class="bottom-nav" id="navTeacher">
+      <button class="nav-btn active" data-panel="t-groups" onclick="setTab(this,'teacher')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 19c0-3 2.5-5.4 5.5-5.4s5.5 2.4 5.5 5.4"/><path d="M14.5 14.3c2.4.3 4 2.3 4 4.7"/></svg></div><div class="nav-label">Guruhlar</div>
+      </button>
+      <button class="nav-btn" data-panel="t-students" onclick="setTab(this,'teacher')">
+        <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.13-7 7-7s7 3.1 7 7"/></svg></div><div class="nav-label">O'quvchilar</div>
+      </button>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -777,6 +811,8 @@ const state = {
   pending: [],
   history: [],
   referral: { link: null, referred_count: 0, paid_count: 0, total_points: 0 },
+  teacherGroups: [],
+  teacherStudents: [],
 };
 
 let newProductImageData = null;
@@ -794,6 +830,7 @@ function showError(title, text){
   document.getElementById('view-loading').style.display = 'none';
   document.getElementById('view-student').style.display = 'none';
   document.getElementById('view-admin').style.display = 'none';
+  document.getElementById('view-teacher').style.display = 'none';
   document.getElementById('view-error').style.display = 'block';
   document.getElementById('errorTitle').textContent = title;
   document.getElementById('errorText').textContent = text;
@@ -805,7 +842,8 @@ function setTab(el, scope){
   nav.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   const panelId = el.dataset.panel;
-  const container = scope==='student' ? document.getElementById('view-student') : document.getElementById('view-admin');
+  const containerId = scope==='student' ? 'view-student' : (scope==='teacher' ? 'view-teacher' : 'view-admin');
+  const container = document.getElementById(containerId);
   container.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById(panelId).classList.add('active');
 }
@@ -1214,6 +1252,108 @@ function renderAlerts(){
   `).join('');
 }
 
+// ===== TEACHER: GROUPS =====
+const STUDENT_STATUS_LABELS = {
+  pending: '⏳ Kutilmoqda', approved: '✅ Tasdiqlangan',
+  rejected: '❌ Rad etilgan', blocked: '🚫 Bloklangan', removed: '🗑 O\'chirilgan',
+};
+
+function renderTeacherGroups(){
+  const list = document.getElementById('teacherGroupList');
+  if(!list) return;
+  document.getElementById('teacherGroupCount').textContent = state.teacherGroups.length + ' ta';
+  if(state.teacherGroups.length === 0){
+    list.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:22px;">Hali guruh yo'q - pastda yangi guruh yarating</div>`;
+    return;
+  }
+  list.innerHTML = state.teacherGroups.map(g => `
+    <div class="admin-market-item">
+      <div class="admin-market-row">
+        <div class="info">
+          <div class="name">${g.name}</div>
+          <div class="cond">${g.subject || 'Fan ko\'rsatilmagan'} · 👤 ${g.student_count} ta o'quvchi</div>
+        </div>
+        <div class="admin-market-actions">
+          <button class="btn-edit-price" onclick="renameGroup(${g.id}, '${g.name.replace(/'/g, "\\'")}')">✏️</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function createGroup(){
+  const input = document.getElementById('newGroupName');
+  const name = input.value.trim();
+  if(!name){ toast('Guruh nomini kiriting'); return; }
+  try {
+    await api('/alpino/teacher/groups', { method: 'POST', body: JSON.stringify({ name }) });
+    input.value = '';
+    toast('Guruh yaratildi');
+    await Promise.all([loadTeacherGroups(), loadTeacherStudents()]);
+    renderTeacherGroups();
+    renderTeacherStudents();
+  } catch(e) { toast(e.message); }
+}
+
+async function renameGroup(groupId, currentName){
+  const name = prompt("Guruhning yangi nomini kiriting:", currentName);
+  if(name === null || !name.trim()) return;
+  try {
+    await api(`/alpino/teacher/groups/${groupId}`, { method: 'PATCH', body: JSON.stringify({ name: name.trim() }) });
+    toast('Guruh nomi o\'zgartirildi');
+    await loadTeacherGroups();
+    renderTeacherGroups();
+  } catch(e) { toast(e.message); }
+}
+
+// ===== TEACHER: STUDENTS =====
+function renderTeacherStudents(){
+  const list = document.getElementById('teacherStudentList');
+  if(!list) return;
+  document.getElementById('teacherStudentCount').textContent = state.teacherStudents.length + ' ta';
+  if(state.teacherStudents.length === 0){
+    list.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:22px;">Siz hali o'quvchi qo'shmagansiz - botda "➕ O'quvchi qo'shish" tugmasidan foydalaning</div>`;
+    return;
+  }
+  const groupOptions = state.teacherGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  list.innerHTML = state.teacherStudents.map(s => `
+    <div class="admin-market-item">
+      <div class="admin-market-row">
+        <div class="info">
+          <div class="name">${s.full_name}</div>
+          <div class="cond">${STUDENT_STATUS_LABELS[s.status] || s.status}${s.login ? ' · Login: ' + s.login : ''}</div>
+        </div>
+        <div class="admin-market-actions">
+          <select class="admin-tier-select" onchange="moveStudent(${s.id}, this.value)">
+            <option value="" ${!s.group_id ? 'selected' : ''}>— Guruhsiz —</option>
+            ${groupOptions.replace(`value="${s.group_id}"`, `value="${s.group_id}" selected`)}
+          </select>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function moveStudent(studentId, groupIdValue){
+  try {
+    if(!groupIdValue){
+      const current = state.teacherStudents.find(s => s.id === studentId);
+      if(current && current.group_id){
+        await api(`/alpino/teacher/groups/${current.group_id}/students/${studentId}`, { method: 'DELETE' });
+      }
+      toast("O'quvchi guruhdan chiqarildi");
+    } else {
+      await api(`/alpino/teacher/groups/${groupIdValue}/students`, {
+        method: 'POST', body: JSON.stringify({ student_id: studentId }),
+      });
+      toast("O'quvchi guruhga ko'chirildi");
+    }
+    await Promise.all([loadTeacherGroups(), loadTeacherStudents()]);
+    renderTeacherGroups();
+    renderTeacherStudents();
+  } catch(e) { toast(e.message); }
+}
+
 // =============================================
 // ===== MA'LUMOT YUKLASH (API chaqiruvlari) =====
 // =============================================
@@ -1248,6 +1388,8 @@ async function loadKpi(){
   document.getElementById('kpiBlocked').textContent = kpi.blocked_unregistered;
   document.getElementById('kpiEnrolled').textContent = kpi.enrolled;
 }
+async function loadTeacherGroups(){ state.teacherGroups = await api('/alpino/teacher/groups'); }
+async function loadTeacherStudents(){ state.teacherStudents = await api('/alpino/teacher/students'); }
 
 async function initStudent(){
   document.getElementById('view-student').style.display = 'block';
@@ -1269,6 +1411,13 @@ async function initAdmin(){
   renderAlerts();
 }
 
+async function initTeacher(){
+  document.getElementById('view-teacher').style.display = 'block';
+  await Promise.all([loadTeacherGroups(), loadTeacherStudents()]);
+  renderTeacherGroups();
+  renderTeacherStudents();
+}
+
 async function init(){
   try {
     const me = await loadMe();
@@ -1278,6 +1427,8 @@ async function init(){
       await initStudent();
     } else if(me.role === 'admin'){
       await initAdmin();
+    } else if(me.role === 'teacher'){
+      await initTeacher();
     } else {
       showError("Bu ilova sizga mo'ljallanmagan", "Ball qo'yish uchun botdagi buyruqdan foydalaning.");
     }
