@@ -65,7 +65,10 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    # Nullable: o'qituvchi qo'lda qo'shgan o'quvchida hali Telegram akkaunti
+    # bog'lanmagan bo'lishi mumkin (login/parol orqali keyinroq bog'lanadi -
+    # bot/services/teacher_student_service.py).
+    telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, index=True, nullable=True)
     username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     full_name: Mapped[str] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
@@ -73,6 +76,16 @@ class User(Base):
     status: Mapped[UserStatus] = mapped_column(Enum(UserStatus), default=UserStatus.PENDING)
     referred_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # ---- Login/parol orqali ro'yxatga olish (telegramsiz o'quvchilar) ----
+    # "telegram_lead": botga o'zi /start bosib kirgan (eski, standart oqim).
+    # "teacher_enrolled": o'qituvchi ism-familiya+guruh bilan qo'lda qo'shgan.
+    # Alpino faqat "teacher_enrolled" + status=APPROVED bo'lgan o'quvchilarga
+    # ochiq (bot/services/alpino_access.py).
+    source: Mapped[str] = mapped_column(String(20), default="telegram_lead")
+    login: Mapped[str | None] = mapped_column(String(16), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    added_by_teacher_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     taught_groups: Mapped[list["Group"]] = relationship(back_populates="teacher")
     group_memberships: Mapped[list["GroupStudent"]] = relationship(back_populates="student")
