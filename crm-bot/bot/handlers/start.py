@@ -12,6 +12,7 @@ from bot.services.group_service import enroll_student, get_open_groups
 from bot.services.user_service import (
     create_pending_user, ensure_super_admin, get_user_by_telegram_id,
 )
+from bot.middlewares.access_control import REMOVED_TEXT
 from bot.utils.states import Registration
 
 router = Router(name="start")
@@ -47,6 +48,8 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext):
             await message.answer("🚫 Hisobingiz bloklangan.")
         elif user.status == UserStatus.REJECTED:
             await message.answer(WELCOME_TEXT, reply_markup=guest_menu_kb())
+        elif user.status == UserStatus.REMOVED:
+            await message.answer(REMOVED_TEXT)
         return
 
     # Diqqat: ref_ havoladagi referal AccessControlMiddleware'da allaqachon
@@ -62,6 +65,9 @@ async def start_registration(message: Message, session: AsyncSession, state: FSM
         return
     if existing is not None and existing.status == UserStatus.PENDING:
         await message.answer("⏳ Arizangiz allaqachon yuborilgan, admin javobini kuting.")
+        return
+    if existing is not None and existing.status == UserStatus.REMOVED:
+        await message.answer(REMOVED_TEXT)
         return
 
     await message.answer(
