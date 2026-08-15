@@ -16,6 +16,10 @@ PENDING_TEXT = (
 )
 BLOCKED_TEXT = "🚫 Sizning hisobingiz bloklangan. Batafsil ma'lumot uchun administratorga murojaat qiling."
 REJECTED_TEXT = "❌ Arizangiz rad etilgan. Qayta murojaat qilish uchun \"🎓 Kursga yozilish\" tugmasini bosing."
+REMOVED_TEXT = (
+    "😔 Siz o'quvchilar bazasidan topilmadingiz.\n\n"
+    "Iltimos, o'qituvchingiz yoki administrator bilan bog'laning."
+)
 
 
 class AccessControlMiddleware(BaseMiddleware):
@@ -90,6 +94,8 @@ class AccessControlMiddleware(BaseMiddleware):
             text = BLOCKED_TEXT
         elif db_user.status == UserStatus.REJECTED:
             text = REJECTED_TEXT
+        elif db_user.status == UserStatus.REMOVED:
+            text = REMOVED_TEXT
         else:
             return await handler(event, data)
 
