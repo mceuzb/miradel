@@ -79,7 +79,7 @@ async def alpino_auth_middleware(request: web.Request, handler):
             return web.json_response(
                 {"ok": False, "error": "not_registered", "message": "Ro'yxatdan o'tmagansiz"}, status=403
             )
-        if not await alpino_access_allowed(session, user.role):
+        if not await alpino_access_allowed(session, user):
             return web.json_response(
                 {"ok": False, "error": "module_disabled", "message": "Alpino hozircha faol emas"}, status=403
             )
