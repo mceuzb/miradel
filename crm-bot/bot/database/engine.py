@@ -55,19 +55,50 @@ _MISSING_COLUMN_PATCHES: list[str] = [
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS alpino_verified BOOLEAN NOT NULL DEFAULT FALSE",
 ]
 
+# Postgres native ENUM turlariga yangi qiymat qo'shish uchun (oddiy
+# ALTER COLUMN/ADD COLUMN'dan farqli - alohida buyruq talab qiladi).
+# SQLAlchemy `Enum(UserStatus)` uchun avtomatik nom (name= berilmagani
+# uchun) - klass nomining kichik harflari: "userstatus".
+_MISSING_ENUM_VALUE_PATCHES: list[tuple[str, str]] = [
+    # (enum turi nomi, qo'shiladigan yangi qiymat)
+    ("userstatus", "removed"),
+]
+
 
 async def _patch_missing_columns(conn) -> None:
+    # Har bir buyruqni ALOHIDA SAVEPOINT'da bajaramiz - shu tarzda, agar
+    # ulardan biri (masalan enum nomi noto'g'ri bo'lib chiqsa) xato bersa,
+    # faqat o'sha buyruq bekor bo'ladi, QOLGAN patchlar (va create_all)
+    # baribir muvaffaqiyatli commit bo'ladi. Avval BARCHASI bitta katta
+    # tranzaksiyada edi - bittasi xato bersa, HAMMASI (hatto ilgari ishlab
+    # turgan patchlar ham) bekor bo'lib, bot butunlay ishga tushmay qolardi.
     for statement in _MISSING_COLUMN_PATCHES:
-        await conn.execute(text(statement))
+        try:
+            async with conn.begin_nested():
+                await conn.execute(text(statement))
+        except Exception as exc:
+            print(f"[init_db] Patch o'tmadi (e'tiborsiz qoldirildi): {statement!r} -> {exc}")
+
+    for enum_name, value in _MISSING_ENUM_VALUE_PATCHES:
+        try:
+            async with conn.begin_nested():
+                await conn.execute(text(f"ALTER TYPE {enum_name} ADD VALUE IF NOT EXISTS '{value}'"))
+        except Exception as exc:
+            print(f"[init_db] Enum patch o'tmadi (e'tiborsiz qoldirildi): {enum_name}.{value} -> {exc}")
+
     # Bitta odam faqat bir marta referral bo'la olishi - mavjud takrorlar
     # bo'lsa xato bermasligi uchun alohida, xavfsiz tekshiruv bilan.
-    exists = await conn.execute(text(
-        "SELECT 1 FROM pg_constraint WHERE conname = 'uq_alpino_referred_once'"
-    ))
-    if exists.first() is None:
-        await conn.execute(text(
-            "ALTER TABLE alpino_referrals ADD CONSTRAINT uq_alpino_referred_once UNIQUE (referred_id)"
-        ))
+    try:
+        async with conn.begin_nested():
+            exists = await conn.execute(text(
+                "SELECT 1 FROM pg_constraint WHERE conname = 'uq_alpino_referred_once'"
+            ))
+            if exists.first() is None:
+                await conn.execute(text(
+                    "ALTER TABLE alpino_referrals ADD CONSTRAINT uq_alpino_referred_once UNIQUE (referred_id)"
+                ))
+    except Exception as exc:
+        print(f"[init_db] Referral constraint patch o'tmadi: {exc}")
 
 
 async def init_db() -> None:
