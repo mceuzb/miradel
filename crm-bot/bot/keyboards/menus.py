@@ -65,6 +65,7 @@ async def admin_menu_kb(session: AsyncSession, user: User) -> ReplyKeyboardMarku
         [KeyboardButton(text="📊 Hisobotlar"), KeyboardButton(text="📢 Majburiy kanallar")],
         [KeyboardButton(text="🎛 Konkurslarni boshqarish"), KeyboardButton(text="📢 Ommaviy xabar")],
         [KeyboardButton(text="🎫 Referal kartalar")],
+        [KeyboardButton(text="🎓 Eski o'quvchilarni Alpino'ga ulash")],
     ]
     alpino = await _alpino_row(session, user)
     if alpino:
@@ -91,6 +92,12 @@ async def student_menu_kb(session: AsyncSession, user: User) -> ReplyKeyboardMar
         [KeyboardButton(text="🎁 Konkurslar"), KeyboardButton(text="🏆 Reyting")],
         [KeyboardButton(text="🔗 Do'stlarni taklif qilish")],
     ]
+    # Login berilgan, lekin hali tasdiqlanmagan (Alpino ochilmagan) o'quvchiga
+    # kodni kiritish tugmasi ko'rsatiladi - masalan admin "Eski o'quvchilarni
+    # Alpino'ga ulash" orqali login yaratib bergan, lekin o'quvchi hali
+    # botda kiritmagan bo'lishi mumkin.
+    if user.login and not user.alpino_verified:
+        rows.append([KeyboardButton(text="🔑 Alpino kodini kiritish")])
     alpino = await _alpino_row(session, user)
     if alpino:
         rows.append(alpino)
