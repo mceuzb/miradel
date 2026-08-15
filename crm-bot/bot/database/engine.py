@@ -40,6 +40,15 @@ _MISSING_COLUMN_PATCHES: list[str] = [
     # bo'ladi va StringDataRightTruncationError berardi. TEXT ga o'tkazish
     # xavfsiz va qayta ishga tushirilsa ham xato bermaydi.
     "ALTER TABLE alpino_market_items ALTER COLUMN image_url TYPE TEXT",
+    # Login/parol orqali ro'yxatga olish (telegramsiz o'quvchilar) - o'qituvchi
+    # ism-familiya+guruh bilan qo'lda qo'shgan o'quvchida hali telegram_id
+    # bo'lmaydi, shuning uchun bu ustun endi NOT NULL emas.
+    "ALTER TABLE users ALTER COLUMN telegram_id DROP NOT NULL",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'telegram_lead'",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS login VARCHAR(16)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS added_by_teacher_id INTEGER REFERENCES users(id)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS ux_users_login ON users(login) WHERE login IS NOT NULL",
 ]
 
 
