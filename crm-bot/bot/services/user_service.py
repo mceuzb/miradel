@@ -37,7 +37,15 @@ async def sync_username(session: AsyncSession, user: User, username: str | None)
 
 
 async def get_pending_users(session: AsyncSession) -> list[User]:
-    result = await session.execute(select(User).where(User.status == UserStatus.PENDING))
+    """Faqat Telegram orqali o'zi ro'yxatdan o'tganlar - o'qituvchi qo'lda
+    qo'shgan o'quvchilar alohida ro'yxatda (teacher_student_service.
+    get_teacher_added_pending), aks holda ikki joyda takrorlanib qolardi."""
+    result = await session.execute(
+        select(User).where(
+            User.status == UserStatus.PENDING,
+            User.source == "telegram_lead",
+        )
+    )
     return list(result.scalars().all())
 
 
