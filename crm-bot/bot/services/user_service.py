@@ -87,6 +87,42 @@ async def block_user(session: AsyncSession, user_id: int, blocked: bool = True) 
     return user
 
 
+async def search_approved_students(session: AsyncSession, query: str, limit: int = 15) -> list[User]:
+    """Admin tozalash uchun tasdiqlangan o'quvchilarni ism bo'yicha qidiradi
+    (sinov paytida xato tasdiqlangan, haqiqiy o'quvchi bo'lmagan hisoblarni
+    topib o'chirish uchun)."""
+    like = f"%{query.strip()}%"
+    result = await session.execute(
+        select(User).where(
+            User.role == UserRole.STUDENT,
+            User.status == UserStatus.APPROVED,
+            User.full_name.ilike(like),
+        ).limit(limit)
+    )
+    return list(result.scalars().all())
+
+
+async def remove_student(session: AsyncSession, user_id: int) -> User | None:
+    """O'quvchini "o'chiradi" - haqiqatda bazadan butunlay o'chirmaydi
+    (davomat/vazifa/Alpino tarixi kabi bog'liq yozuvlar buzilib qolmasligi
+    uchun), balki status=REMOVED qilib belgilaydi va guruh(lar)dagi
+    a'zoligini olib tashlaydi. Shundan keyin bu odam botga kirsa
+    "o'quvchilar bazasidan topilmadingiz" xabarini ko'radi
+    (bot/middlewares/access_control.py - REMOVED_TEXT)."""
+    from bot.database.models import GroupStudent
+
+    user = await session.get(User, user_id)
+    if user is None:
+        return None
+    user.status = UserStatus.REMOVED
+    await session.execute(
+        GroupStudent.__table__.delete().where(GroupStudent.student_id == user_id)
+    )
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
 async def ensure_super_admin(session: AsyncSession, telegram_id: int) -> None:
     """.env dagi SUPER_ADMIN_ID bo'yicha birinchi adminni avtomatik tasdiqlangan
     holatda yaratadi (agar hali mavjud bo'lmasa)."""
