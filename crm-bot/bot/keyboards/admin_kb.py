@@ -28,17 +28,28 @@ def group_status_select_kb(callback_prefix: str) -> InlineKeyboardMarkup:
 
 
 def groups_list_kb(groups) -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton(
-            text=f"✏️ {g.name} — {ENROLLMENT_STATUS_LABELS[g.enrollment_status]}",
+    rows = []
+    for g in groups:
+        teacher_mark = " · 👨‍🏫" if g.teacher_id else " · ⚠️ o'qituvchisiz"
+        rows.append([InlineKeyboardButton(
+            text=f"✏️ {g.name} — {ENROLLMENT_STATUS_LABELS[g.enrollment_status]}{teacher_mark}",
             callback_data=f"edit_group_status:{g.id}",
-        )]
-        for g in groups
-    ]
+        )])
+        rows.append([InlineKeyboardButton(
+            text=f"👨‍🏫 {g.name} - o'qituvchi biriktirish", callback_data=f"assign_teacher:{g.id}",
+        )])
     rows.append([InlineKeyboardButton(text="➕ Yangi guruh qo'shish", callback_data="new_group")])
     rows.append([InlineKeyboardButton(
         text="📢 Eski o'quvchilarga kurs so'rash", callback_data="broadcast_course_selection",
     )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def teacher_select_kb(teachers, group_id: int) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text=f"👨‍🏫 {t.full_name}", callback_data=f"set_group_teacher:{group_id}:{t.id}")]
+        for t in teachers
+    ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
