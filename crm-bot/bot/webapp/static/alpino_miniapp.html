@@ -732,15 +732,9 @@
     <div class="section" style="padding-top:10px;">
 
       <div class="panel active" id="t-groups">
-        <div class="section-head"><div class="section-title">Mening guruhlarim</div><div class="section-sub" id="teacherGroupCount">0 ta</div></div>
+        <div class="section-head"><div class="section-title">Menga biriktirilgan guruhlar</div><div class="section-sub" id="teacherGroupCount">0 ta</div></div>
         <div id="teacherGroupList"></div>
-        <div class="card">
-          <div class="section-title" style="font-size:13px; margin-bottom:8px;">Yangi guruh yaratish</div>
-          <div class="row">
-            <input type="text" id="newGroupName" placeholder="Guruh nomi (masalan: 9-A)">
-          </div>
-          <button class="add-btn" onclick="createGroup()">➕ Guruh yaratish</button>
-        </div>
+        <div class="card" style="color:var(--ink-mute); font-size:11px; text-align:center; padding:10px;">Yangi guruh yaratish va o'qituvchi biriktirish faqat adminda - o'quvchilaringizni shu guruhlar ichida "O'quvchilar" bo'limidan ko'chirasiz</div>
       </div>
 
       <div class="panel" id="t-students">
@@ -813,6 +807,7 @@ const state = {
   referral: { link: null, referred_count: 0, paid_count: 0, total_points: 0 },
   teacherGroups: [],
   teacherStudents: [],
+  teacherCategories: [],
 };
 
 let newProductImageData = null;
@@ -1252,7 +1247,8 @@ function renderAlerts(){
   `).join('');
 }
 
-// ===== TEACHER: GROUPS =====
+// ===== TEACHER: GROUPS (faqat ko'rish - guruh yaratish/o'qituvchi
+// biriktirish huquqi faqat adminda) =====
 const STUDENT_STATUS_LABELS = {
   pending: '⏳ Kutilmoqda', approved: '✅ Tasdiqlangan',
   rejected: '❌ Rad etilgan', blocked: '🚫 Bloklangan', removed: '🗑 O\'chirilgan',
@@ -1263,7 +1259,7 @@ function renderTeacherGroups(){
   if(!list) return;
   document.getElementById('teacherGroupCount').textContent = state.teacherGroups.length + ' ta';
   if(state.teacherGroups.length === 0){
-    list.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:22px;">Hali guruh yo'q - pastda yangi guruh yarating</div>`;
+    list.innerHTML = `<div class="card" style="text-align:center; color:var(--ink-mute); font-size:12.5px; padding:22px;">Sizga hali guruh biriktirilmagan - admin bilan bog'laning</div>`;
     return;
   }
   list.innerHTML = state.teacherGroups.map(g => `
@@ -1273,40 +1269,12 @@ function renderTeacherGroups(){
           <div class="name">${g.name}</div>
           <div class="cond">${g.subject || 'Fan ko\'rsatilmagan'} · 👤 ${g.student_count} ta o'quvchi</div>
         </div>
-        <div class="admin-market-actions">
-          <button class="btn-edit-price" onclick="renameGroup(${g.id}, '${g.name.replace(/'/g, "\\'")}')">✏️</button>
-        </div>
       </div>
     </div>
   `).join('');
 }
 
-async function createGroup(){
-  const input = document.getElementById('newGroupName');
-  const name = input.value.trim();
-  if(!name){ toast('Guruh nomini kiriting'); return; }
-  try {
-    await api('/alpino/teacher/groups', { method: 'POST', body: JSON.stringify({ name }) });
-    input.value = '';
-    toast('Guruh yaratildi');
-    await Promise.all([loadTeacherGroups(), loadTeacherStudents()]);
-    renderTeacherGroups();
-    renderTeacherStudents();
-  } catch(e) { toast(e.message); }
-}
-
-async function renameGroup(groupId, currentName){
-  const name = prompt("Guruhning yangi nomini kiriting:", currentName);
-  if(name === null || !name.trim()) return;
-  try {
-    await api(`/alpino/teacher/groups/${groupId}`, { method: 'PATCH', body: JSON.stringify({ name: name.trim() }) });
-    toast('Guruh nomi o\'zgartirildi');
-    await loadTeacherGroups();
-    renderTeacherGroups();
-  } catch(e) { toast(e.message); }
-}
-
-// ===== TEACHER: STUDENTS =====
+// ===== TEACHER: STUDENTS (guruhga ko'chirish + ball berish) =====
 function renderTeacherStudents(){
   const list = document.getElementById('teacherStudentList');
   if(!list) return;
@@ -1316,6 +1284,8 @@ function renderTeacherStudents(){
     return;
   }
   const groupOptions = state.teacherGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  const categoryOptions = state.teacherCategories.map(c => `<option value="${c.category}">${c.label} (maks ${c.max_points})</option>`).join('');
+  const hasGroups = state.teacherGroups.length > 0;
   list.innerHTML = state.teacherStudents.map(s => `
     <div class="admin-market-item">
       <div class="admin-market-row">
@@ -1323,12 +1293,18 @@ function renderTeacherStudents(){
           <div class="name">${s.full_name}</div>
           <div class="cond">${STUDENT_STATUS_LABELS[s.status] || s.status}${s.login ? ' · Login: ' + s.login : ''}</div>
         </div>
-        <div class="admin-market-actions">
-          <select class="admin-tier-select" onchange="moveStudent(${s.id}, this.value)">
-            <option value="" ${!s.group_id ? 'selected' : ''}>— Guruhsiz —</option>
-            ${groupOptions.replace(`value="${s.group_id}"`, `value="${s.group_id}" selected`)}
-          </select>
-        </div>
+      </div>
+      ${hasGroups ? `
+      <div class="row" style="margin-top:8px;">
+        <select class="admin-tier-select" style="flex:1;" onchange="moveStudent(${s.id}, this.value)">
+          <option value="" ${!s.group_id ? 'selected' : ''}>— Guruhsiz —</option>
+          ${groupOptions.replace(`value="${s.group_id}"`, `value="${s.group_id}" selected`)}
+        </select>
+      </div>` : ''}
+      <div class="row" style="margin-top:6px;">
+        <select class="admin-tier-select" id="cat_${s.id}" style="flex:1;">${categoryOptions}</select>
+        <input type="number" class="limit-input" id="amt_${s.id}" placeholder="Ball" style="width:64px;">
+        <button class="act-btn act-approve" style="flex:0 0 auto; padding:9px 12px;" onclick="giveStudentPoints(${s.id})">💰 Berish</button>
       </div>
     </div>
   `).join('');
@@ -1351,6 +1327,20 @@ async function moveStudent(studentId, groupIdValue){
     await Promise.all([loadTeacherGroups(), loadTeacherStudents()]);
     renderTeacherGroups();
     renderTeacherStudents();
+  } catch(e) { toast(e.message); }
+}
+
+async function giveStudentPoints(studentId){
+  const category = document.getElementById(`cat_${studentId}`).value;
+  const amountInput = document.getElementById(`amt_${studentId}`);
+  const amount = Number(amountInput.value);
+  if(!amount || amount <= 0){ toast("Ball miqdorini kiriting"); return; }
+  try {
+    await api('/alpino/teacher/points', {
+      method: 'POST', body: JSON.stringify({ student_id: studentId, category, amount }),
+    });
+    amountInput.value = '';
+    toast("Ball taklif qilindi - admin tasdiqlagach hisoblanadi");
   } catch(e) { toast(e.message); }
 }
 
@@ -1390,6 +1380,7 @@ async function loadKpi(){
 }
 async function loadTeacherGroups(){ state.teacherGroups = await api('/alpino/teacher/groups'); }
 async function loadTeacherStudents(){ state.teacherStudents = await api('/alpino/teacher/students'); }
+async function loadTeacherCategories(){ state.teacherCategories = await api('/alpino/teacher/categories'); }
 
 async function initStudent(){
   document.getElementById('view-student').style.display = 'block';
@@ -1413,7 +1404,7 @@ async function initAdmin(){
 
 async function initTeacher(){
   document.getElementById('view-teacher').style.display = 'block';
-  await Promise.all([loadTeacherGroups(), loadTeacherStudents()]);
+  await Promise.all([loadTeacherGroups(), loadTeacherStudents(), loadTeacherCategories()]);
   renderTeacherGroups();
   renderTeacherStudents();
 }
