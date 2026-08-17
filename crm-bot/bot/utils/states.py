@@ -39,6 +39,14 @@ class RandomContestFinish(StatesGroup):
     waiting_winner_id = State()
 
 
+class AdminBonusPoints(StatesGroup):
+    """Admin referal konkursiga qo'lda (ommaviy reytingda ko'rinmaydigan)
+    bonus ball qo'shishi uchun."""
+    waiting_telegram_id = State()
+    waiting_points = State()
+    waiting_note = State()
+
+
 class BroadcastCreation(StatesGroup):
     waiting_text = State()
     waiting_group = State()
