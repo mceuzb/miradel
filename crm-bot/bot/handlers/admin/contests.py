@@ -14,8 +14,9 @@ from bot.services.contest_service import (
     get_contest_participants, get_contest_results,
 )
 from bot.services.export_service import build_participants_excel
-from bot.services.referral_service import get_leaderboard
-from bot.utils.states import ContestCreation, RandomContestFinish
+from bot.services.referral_service import add_admin_bonus_points, get_leaderboard
+from bot.services.visitor_service import get_visitor
+from bot.utils.states import AdminBonusPoints, ContestCreation, RandomContestFinish
 
 router = Router(name="admin_contests")
 
@@ -158,9 +159,80 @@ async def contest_rating_callback(callback: CallbackQuery, session: AsyncSession
         username = f"@{visitor.username}" if visitor.username else "(username yo'q)"
         lines.append(f"{i}. {visitor.full_name} {username} — {count} ball")
     await callback.message.answer(
-        f"📊 '{contest.title}' reytingi — Top {len(lines)} (faqat admin ko'rinishi)\n\n" + "\n".join(lines)
+        f"📊 '{contest.title}' reytingi — Top {len(lines)} (faqat admin ko'rinishi, "
+        "qo'lda qo'shilgan bonus ballar bilan)\n\n" + "\n".join(lines)
     )
     await callback.answer()
+
+
+@router.callback_query(F.data.startswith("add_bonus_points:"))
+@require_role(UserRole.ADMIN)
+async def add_bonus_points_start(callback: CallbackQuery, state: FSMContext, session: AsyncSession, **kwargs):
+    contest_id = int(callback.data.split(":")[1])
+    contest = await session.get(Contest, contest_id)
+    if contest is None or contest.status != ContestStatus.ACTIVE or contest.contest_type != ContestType.REFERRAL:
+        await callback.answer("Konkurs topilmadi yoki mos emas", show_alert=True)
+        return
+
+    await state.update_data(contest_id=contest_id)
+    await callback.message.answer(
+        "⭐ Kimga bonus ball qo'shmoqchisiz? Foydalanuvchining Telegram ID raqamini yuboring:"
+    )
+    await state.set_state(AdminBonusPoints.waiting_telegram_id)
+    await callback.answer()
+
+
+@router.message(AdminBonusPoints.waiting_telegram_id)
+async def add_bonus_points_telegram_id(message: Message, state: FSMContext, session: AsyncSession):
+    raw = message.text.strip()
+    if not raw.lstrip("-").isdigit():
+        await message.answer("Noto'g'ri format. Faqat Telegram ID (raqam) yuboring:")
+        return
+    telegram_id = int(raw)
+
+    visitor = await get_visitor(session, telegram_id)
+    if visitor is None:
+        await message.answer(
+            "⚠️ Bu ID botga hali kirmagan (visitor topilmadi). Boshqa ID yuboring yoki foydalanuvchi "
+            "avval botni ishga tushirishi kerak:"
+        )
+        return
+
+    await state.update_data(telegram_id=telegram_id, telegram_full_name=visitor.full_name)
+    await message.answer(
+        f"👤 {visitor.full_name} tanlandi.\n\nNecha ball qo'shmoqchisiz? (musbat butun son, masalan: 5)"
+    )
+    await state.set_state(AdminBonusPoints.waiting_points)
+
+
+@router.message(AdminBonusPoints.waiting_points)
+async def add_bonus_points_amount(message: Message, state: FSMContext):
+    raw = message.text.strip()
+    if not raw.isdigit() or int(raw) < 1:
+        await message.answer("Iltimos, musbat butun son kiriting (masalan: 5):")
+        return
+
+    await state.update_data(points=int(raw))
+    await message.answer("Izoh qoldirmoqchimisiz? (masalan: sabab). Kerak bo'lmasa \"-\" yuboring:")
+    await state.set_state(AdminBonusPoints.waiting_note)
+
+
+@router.message(AdminBonusPoints.waiting_note)
+async def add_bonus_points_note(message: Message, state: FSMContext, session: AsyncSession):
+    note = None if message.text.strip() == "-" else message.text.strip()
+    data = await state.get_data()
+    telegram_id: int = data["telegram_id"]
+    full_name: str = data["telegram_full_name"]
+    points: int = data["points"]
+    await state.clear()
+
+    await add_admin_bonus_points(session, telegram_id, points, note)
+
+    await message.answer(
+        f"✅ {full_name} (ID: {telegram_id}) ga {points} ball qo'shildi.\n\n"
+        "ℹ️ Bu ball ommaviy \"🏆 Reyting\"da ko'rinmaydi, faqat konkurs g'olibini aniqlashda va "
+        "admin panelidagi reytingda hisobga olinadi."
+    )
 
 
 @router.callback_query(F.data.startswith("contest_participants_count:"))
