@@ -104,9 +104,11 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
         await message.answer("Hozircha faol konkurs yo'q.")
         return
 
-    own_stats = await get_user_stats(session, active, message.from_user.id)
+    # include_admin_bonus=False: admin tomonidan qo'lda qo'shilgan ballar
+    # ommaviy reytingda hisobga olinmaydi va bilinmaydi.
+    own_stats = await get_user_stats(session, active, message.from_user.id, include_admin_bonus=False)
 
-    leaderboard = await get_leaderboard(session, active, limit=100)
+    leaderboard = await get_leaderboard(session, active, limit=100, include_admin_bonus=False)
     if not leaderboard:
         await message.answer(
             f"🏆 <b>{active.title}</b>\n\n"
