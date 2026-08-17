@@ -124,6 +124,7 @@ def contests_kb(contests) -> InlineKeyboardMarkup:
                     InlineKeyboardButton(text=f"{type_icon} #{c.id} reyting", callback_data=f"contest_rating:{c.id}"),
                     InlineKeyboardButton(text=f"🏁 #{c.id} yakunlash", callback_data=f"finish_contest:{c.id}"),
                 ])
+                rows.append([InlineKeyboardButton(text=f"⭐ #{c.id} Ball qo'shish", callback_data=f"add_bonus_points:{c.id}")])
             rows.append([InlineKeyboardButton(text=f"📥 #{c.id} Excel yuklab olish", callback_data=f"contest_export:{c.id}")])
         elif c.status == ContestStatus.FINISHED:
             rows.append([InlineKeyboardButton(text=f"{type_icon} #{c.id} g'oliblar", callback_data=f"contest_results:{c.id}")])
