@@ -283,12 +283,19 @@ class ReferralPointsLedger(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     recipient_telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
     points: Mapped[int] = mapped_column(Integer)
-    source_referred_telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    # Admin bonus yozuvlarida manba odam bo'lmagani uchun NULL bo'lishi mumkin
+    source_referred_telegram_id: Mapped[int | None] = mapped_column(BigInteger, index=True, nullable=True)
     distance: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     # False bo'lsa - manba (source_referred_telegram_id) kanaldan chiqib ketgani
     # uchun bu ball vaqtincha hisobga olinmaydi (qaytib kirsa True'ga qaytadi)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # True bo'lsa - bu ball admin tomonidan qo'lda qo'shilgan (haqiqiy referal
+    # emas). Umumiy (ommaviy) "🏆 Reyting"da HISOBGA OLINMAYDI - faqat konkurs
+    # g'oliblarini aniqlashda va admin panelida ko'rinadi/qatnashadi.
+    is_admin_bonus: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Admin bonus sababini eslab qolish uchun (ixtiyoriy)
+    admin_note: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
 
 class Contest(Base):
