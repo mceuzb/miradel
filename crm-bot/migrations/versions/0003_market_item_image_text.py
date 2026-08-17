@@ -10,6 +10,9 @@ Revision ID: 0003_market_item_image_text
 Revises: 0002_alpino_market_catalog
 Create Date: 2026-08-14
 
+MUHIM (2026-08-17 tuzatildi): idempotent qilindi - agar ustun allaqachon
+TEXT bo'lsa (masalan model.py o'zgarishi bilan create_all() orqali to'g'ridan
+TEXT sifatida yaratilgan bo'lsa), qayta ALTER qilishga urinmaydi.
 """
 from alembic import op
 import sqlalchemy as sa
@@ -21,13 +24,21 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.alter_column(
-        "alpino_market_items",
-        "image_url",
-        existing_type=sa.String(500),
-        type_=sa.Text(),
-        existing_nullable=True,
-    )
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {c["name"]: c for c in inspector.get_columns("alpino_market_items")}
+    current_type = columns.get("image_url", {}).get("type")
+
+    # Agar ustun allaqachon TEXT (yoki unga o'xshash cheklovsiz turdagi) bo'lsa,
+    # qayta o'zgartirishga hojat yo'q.
+    if isinstance(current_type, sa.String) and not isinstance(current_type, sa.Text):
+        op.alter_column(
+            "alpino_market_items",
+            "image_url",
+            existing_type=sa.String(current_type.length or 500),
+            type_=sa.Text(),
+            existing_nullable=True,
+        )
 
 
 def downgrade() -> None:
