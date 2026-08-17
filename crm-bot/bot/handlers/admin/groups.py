@@ -4,8 +4,8 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.models import Group, GroupEnrollmentStatus, UserRole
-from bot.keyboards.admin_kb import ENROLLMENT_STATUS_LABELS, group_status_select_kb, groups_list_kb
+from bot.database.models import Group, GroupEnrollmentStatus, User, UserRole, UserStatus
+from bot.keyboards.admin_kb import ENROLLMENT_STATUS_LABELS, group_status_select_kb, groups_list_kb, teacher_select_kb
 from bot.keyboards.course_kb import course_select_kb
 from bot.middlewares.role_check import require_role
 from bot.services.group_service import get_open_groups, get_students_without_group
@@ -97,6 +97,41 @@ async def set_group_status(callback: CallbackQuery, session: AsyncSession, **kwa
         f"✅ '{group.name}' guruhi statusi yangilandi: {ENROLLMENT_STATUS_LABELS[group.enrollment_status]}"
     )
     await callback.answer("Yangilandi")
+
+
+@router.callback_query(F.data.startswith("assign_teacher:"))
+@require_role(UserRole.ADMIN)
+async def assign_teacher_start(callback: CallbackQuery, session: AsyncSession, **kwargs):
+    group_id = int(callback.data.split(":")[1])
+    result = await session.execute(
+        select(User).where(User.role == UserRole.TEACHER, User.status == UserStatus.APPROVED)
+    )
+    teachers = result.scalars().all()
+    if not teachers:
+        await callback.answer("Hozircha tasdiqlangan o'qituvchi yo'q.", show_alert=True)
+        return
+    await callback.message.answer(
+        "Qaysi o'qituvchini biriktiramiz?",
+        reply_markup=teacher_select_kb(teachers, group_id),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("set_group_teacher:"))
+@require_role(UserRole.ADMIN)
+async def set_group_teacher(callback: CallbackQuery, session: AsyncSession, **kwargs):
+    _, group_id_str, teacher_id_str = callback.data.split(":")
+    group = await session.get(Group, int(group_id_str))
+    teacher = await session.get(User, int(teacher_id_str))
+    if group is None or teacher is None:
+        await callback.answer("Topilmadi", show_alert=True)
+        return
+
+    group.teacher_id = teacher.id
+    await session.commit()
+
+    await callback.message.edit_text(f"✅ '{group.name}' guruhiga o'qituvchi biriktirildi: {teacher.full_name}")
+    await callback.answer("Biriktirildi")
 
 
 @router.callback_query(F.data == "broadcast_course_selection")
