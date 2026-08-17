@@ -169,11 +169,17 @@ async def restore_referral(session: AsyncSession, referred_telegram_id: int) -> 
     return referral
 
 
-async def _compute_all_scores(session: AsyncSession, contest) -> dict[int, int]:
+async def _compute_all_scores(
+    session: AsyncSession, contest, include_admin_bonus: bool = True,
+) -> dict[int, int]:
     """Har bir foydalanuvchining jami ballini hisoblaydi:
     - ESKI (chain_processed=False) tasdiqlangan to'g'ridan-to'g'ri referallar - 1 ball har biri
     - YANGI (zanjirli tizim orqali) berilgan ballar - ReferralPointsLedger'dan yig'indi
-    Ikkalasi ham berilgan konkurs vaqt oralig'iga qarab filtrlanadi."""
+    Ikkalasi ham berilgan konkurs vaqt oralig'iga qarab filtrlanadi.
+
+    include_admin_bonus=False bo'lsa - admin tomonidan qo'lda qo'shilgan
+    ballar (is_admin_bonus=True) hisobga OLINMAYDI. Bu ommaviy ("🏆 Reyting")
+    ko'rinish uchun ishlatiladi - admin bonusi u yerda bilinmasligi kerak."""
     scores: dict[int, int] = {}
 
     legacy_query = (
@@ -195,6 +201,8 @@ async def _compute_all_scores(session: AsyncSession, contest) -> dict[int, int]:
         .where(ReferralPointsLedger.active == True)  # noqa: E712
         .where(ReferralPointsLedger.created_at >= contest.start_date)
     )
+    if not include_admin_bonus:
+        ledger_query = ledger_query.where(ReferralPointsLedger.is_admin_bonus == False)  # noqa: E712
     if contest.end_date:
         ledger_query = ledger_query.where(ReferralPointsLedger.created_at <= contest.end_date)
     ledger_query = ledger_query.group_by(ReferralPointsLedger.recipient_telegram_id)
@@ -206,10 +214,13 @@ async def _compute_all_scores(session: AsyncSession, contest) -> dict[int, int]:
     return scores
 
 
-async def get_user_stats(session: AsyncSession, contest, telegram_id: int) -> tuple[int, int] | None:
+async def get_user_stats(
+    session: AsyncSession, contest, telegram_id: int, include_admin_bonus: bool = True,
+) -> tuple[int, int] | None:
     """Berilgan foydalanuvchining shu konkursdagi o'rni va jami ballini
-    qaytaradi: (o'rin, ball). Agar birorta ham balli bo'lmasa - None."""
-    scores = await _compute_all_scores(session, contest)
+    qaytaradi: (o'rin, ball). Agar birorta ham balli bo'lmasa - None.
+    include_admin_bonus=False - ommaviy ko'rinish uchun (admin bonusisiz)."""
+    scores = await _compute_all_scores(session, contest, include_admin_bonus=include_admin_bonus)
     user_score = scores.get(telegram_id)
     if user_score is None:
         return None
@@ -217,11 +228,14 @@ async def get_user_stats(session: AsyncSession, contest, telegram_id: int) -> tu
     return (higher_count + 1, user_score)
 
 
-async def get_leaderboard(session: AsyncSession, contest, limit: int | None = 100) -> list[tuple[Visitor, int]]:
+async def get_leaderboard(
+    session: AsyncSession, contest, limit: int | None = 100, include_admin_bonus: bool = True,
+) -> list[tuple[Visitor, int]]:
     """Berilgan konkurs oralig'ida jami ball bo'yicha kamayish tartibida
     reyting qaytaradi: [(Visitor, ball), ...].
-    limit=None bo'lsa - CHEKLOVSIZ, barcha ishtirokchilar qaytariladi."""
-    scores = await _compute_all_scores(session, contest)
+    limit=None bo'lsa - CHEKLOVSIZ, barcha ishtirokchilar qaytariladi.
+    include_admin_bonus=False - ommaviy ko'rinish uchun (admin bonusisiz)."""
+    scores = await _compute_all_scores(session, contest, include_admin_bonus=include_admin_bonus)
     ranked = sorted(scores.items(), key=lambda item: item[1], reverse=True)
     if limit is not None:
         ranked = ranked[:limit]
@@ -232,3 +246,27 @@ async def get_leaderboard(session: AsyncSession, contest, limit: int | None = 10
         if visitor is not None:
             leaderboard.append((visitor, score))
     return leaderboard
+
+
+async def add_admin_bonus_points(
+    session: AsyncSession, recipient_telegram_id: int, points: int, note: str | None = None,
+) -> ReferralPointsLedger:
+    """Admin asosiy referal konkursida xohlagan foydalanuvchiga qo'lda ball
+    qo'shadi. Bu ball _compute_all_scores'da HISOBGA OLINADI (demak konkurs
+    g'olibini aniqlashda va admin panelidagi reytingda ta'sir qiladi), lekin
+    ommaviy "🏆 Reyting"da (include_admin_bonus=False chaqirilganda)
+    KO'RINMAYDI - foydalanuvchilar buni bilishmaydi."""
+    entry = ReferralPointsLedger(
+        recipient_telegram_id=recipient_telegram_id,
+        points=points,
+        source_referred_telegram_id=None,
+        distance=0,
+        created_at=datetime.now(timezone.utc),
+        active=True,
+        is_admin_bonus=True,
+        admin_note=note,
+    )
+    session.add(entry)
+    await session.commit()
+    await session.refresh(entry)
+    return entry
