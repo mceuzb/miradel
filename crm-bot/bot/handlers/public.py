@@ -104,11 +104,14 @@ async def public_rating(message: Message, session: AsyncSession, **kwargs):
         await message.answer("Hozircha faol konkurs yo'q.")
         return
 
-    # include_admin_bonus=False: admin tomonidan qo'lda qo'shilgan ballar
-    # ommaviy reytingda hisobga olinmaydi va bilinmaydi.
-    own_stats = await get_user_stats(session, active, message.from_user.id, include_admin_bonus=False)
+    # Admin tomonidan qo'lda qo'shilgan ball ODATDAGI (include_admin_bonus=True,
+    # standart qiymat) reytingga QO'SHILADI - ya'ni ball/o'rin haqiqatan
+    # o'zgaradi. Lekin bu yerda (va boshqa hech qayerda) uning manbasi/sababi
+    # alohida ko'rsatilmaydi - u oddiy referal ball bilan bir xil ko'rinadi,
+    # shuning uchun admin bonusi bilinmaydi.
+    own_stats = await get_user_stats(session, active, message.from_user.id)
 
-    leaderboard = await get_leaderboard(session, active, limit=100, include_admin_bonus=False)
+    leaderboard = await get_leaderboard(session, active, limit=100)
     if not leaderboard:
         await message.answer(
             f"🏆 <b>{active.title}</b>\n\n"
