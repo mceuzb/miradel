@@ -57,24 +57,6 @@ async def get_teacher_groups(session: AsyncSession, teacher_id: int) -> list[Gro
     return list(result.scalars().all())
 
 
-async def create_teacher_group(session: AsyncSession, teacher_id: int, name: str, subject: str | None = None) -> Group:
-    group = Group(name=name, subject=subject, teacher_id=teacher_id)
-    session.add(group)
-    await session.commit()
-    await session.refresh(group)
-    return group
-
-
-async def rename_teacher_group(session: AsyncSession, teacher_id: int, group_id: int, name: str) -> Group | None:
-    group = await session.get(Group, group_id)
-    if group is None or group.teacher_id != teacher_id:
-        return None
-    group.name = name
-    await session.commit()
-    await session.refresh(group)
-    return group
-
-
 async def get_group_student_counts(session: AsyncSession, group_ids: list[int]) -> dict[int, int]:
     if not group_ids:
         return {}
